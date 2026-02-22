@@ -4101,7 +4101,7 @@ useEffect(() => {
   return (
     
     <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
-        <Toaster position="top-right" />
+    
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
         <div className="flex items-center justify-between">
           <div>

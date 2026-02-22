@@ -109,6 +109,25 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   }
 }
 
+@keyframes stripeMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+.stripe-animation {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.4) 0,
+    rgba(255,255,255,0.4) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  animation: stripeMove 1s linear infinite;
+}
 .animate-slide-in {
   animation: slide-in 0.35s ease-out;
 }

@@ -19,7 +19,7 @@ import {
   ChevronDown,
   ArrowLeft,
 } from "lucide-react";
-import { Toaster } from "react-hot-toast";
+
 import toast from "react-hot-toast";
 import {
   DndContext,
@@ -97,6 +97,8 @@ export default function CMSComplete() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadCompleteToastShown = useRef(false);
+  
+  const redirectTriggered = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor)
   );
@@ -294,6 +296,39 @@ export default function CMSComplete() {
     fetchCMSPosts();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const updating = postsData.filter(
+        p => p.status === "Uploading" || p.status === "Processing"
+      );
+
+      for (let post of updating) {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
+          );
+
+          if (!res.ok) continue;
+
+          const data = await res.json();
+
+          setPostsData(prev =>
+            prev.map(p =>
+              p._id === post._id
+                ? {
+                  ...p,
+                  status: data.status,
+                  uploadProgress: data.progress ?? p.uploadProgress,
+                }
+                : p
+            )
+          );
+        } catch { }
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
   // =============================
   // DRAG & DROP HANDLERS
   // =============================
@@ -506,6 +541,21 @@ export default function CMSComplete() {
     if (isSaving) return; // 🔒 Prevent duplicate clicks
     uploadCompleteToastShown.current = false;
     setIsSaving(true);
+    // 🚀 Instantly add placeholder row
+    const tempPost = {
+      _id: "uploading-temp",
+      title: postData.title,
+      type: postData.displayTo,
+      author: "You",
+      status: "Uploading",
+      uploadProgress: 0,
+      lastModified: new Date().toLocaleDateString(),
+    };
+
+    setPostsData(prev => [tempPost, ...prev]);
+
+    // 🚀 Redirect immediately
+    setCurrentView("dashboard");
     try {
       if (!postData.title.trim()) {
         alert("Please enter a title.");
@@ -636,51 +686,75 @@ export default function CMSComplete() {
 
         // 🔥 Upload progress + "Upload complete, saving…" at 100%
         xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round(
-              (event.loaded / event.total) * 100
+          if (!event.lengthComputable) return;
+
+          const percent = Math.round(
+            (event.loaded / event.total) * 100
+          );
+
+          setUploadProgress(percent);
+
+          // 🔥 Update dashboard row progress
+         setPostsData(prev =>
+  prev.map(p =>
+    p._id === "uploading-temp"
+      ? { ...p, uploadProgress: percent }
+      : p
+  )
+);
+
+          // 🚀 Instant redirect when upload completes
+        
+        };
+        xhr.onload = async () => {
+          if (xhr.status === 401) {
+            const refreshToken = sessionStorage.getItem("refresh_token");
+
+            const refreshRes = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${refreshToken}`,
+                },
+              }
             );
-            setUploadProgress(percent);
-            if (percent === 100 && !uploadCompleteToastShown.current) {
-              uploadCompleteToastShown.current = true;
-              toast.loading("Upload complete, saving…", { id: "cms-upload-status" });
+
+            if (!refreshRes.ok) {
+              sessionStorage.clear();
+              window.location.href = "/admin-login";
+              return;
             }
+
+            const data = await refreshRes.json();
+            sessionStorage.setItem("access_token", data.accessToken);
+
+            // 🔁 Retry upload
+            window.location.reload();
+            return;
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const responseData = JSON.parse(xhr.responseText);
+
+            // mark as processing
+           setPostsData(prev =>
+  prev.map(p =>
+    p._id === "uploading-temp"
+      ? {
+          ...p,
+          _id: responseData._id,
+          status: "Processing",
+          uploadProgress: 100
+        }
+      : p
+  )
+);
+            resolve(responseData);
+          } else {
+            reject(new Error("Upload failed"));
           }
         };
-xhr.onload = async () => {
-  if (xhr.status === 401) {
-    const refreshToken = sessionStorage.getItem("refresh_token");
-
-    const refreshRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      }
-    );
-
-    if (!refreshRes.ok) {
-      sessionStorage.clear();
-      window.location.href = "/admin-login";
-      return;
-    }
-
-    const data = await refreshRes.json();
-    sessionStorage.setItem("access_token", data.accessToken);
-
-    // 🔁 Retry upload
-    handleSavePost();
-    return;
-  }
-
-  if (xhr.status >= 200 && xhr.status < 300) {
-    resolve(JSON.parse(xhr.responseText));
-  } else {
-    reject(new Error("Upload failed"));
-  }
-};
 
         xhr.onerror = () => reject(new Error("Network error"));
 
@@ -692,13 +766,11 @@ xhr.onload = async () => {
         title: data.title || postData.title,
         type: data.displayTo || postData.displayTo,
         author: data.author || "You",
-        status: data.status || "Pending Review",
+        status: "Uploading",
+        uploadProgress: 0,
         visibleAt: data.visibleAt,
         lastModified: new Date().toLocaleDateString(),
-        url:
-          data.heroVideoUrl ||
-          data?.banners?.[0]?.imageUrl ||
-          "",
+        url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
       };
 
       if (isEditing) {
@@ -726,7 +798,7 @@ xhr.onload = async () => {
       setImageMetaDescriptions([]);
       setImageKeywords([]);
     } catch (err) {
- toast.error(err.message);
+      toast.error(err.message);
     }
     finally {
       setIsSaving(false); // 🔓 Always release
@@ -772,7 +844,7 @@ xhr.onload = async () => {
         prev.map((p) => (p._id === postId ? { ...p, status: "Approved" } : p))
       );
 
-     toast.success("Approved!");
+      toast.success("Approved!");
     } catch (err) {
       toast.error(err.message);
     }
@@ -825,7 +897,7 @@ xhr.onload = async () => {
 
       setPostsData((prev) => prev.filter((p) => p._id !== postId));
 
-     toast.success("Deleted successfully");
+      toast.success("Deleted successfully");
     } catch (err) {
       toast.error(err.message);
     }
@@ -1910,16 +1982,53 @@ xhr.onload = async () => {
                         {post.lastModified}
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                            post.status,
-                            post
-                          )}`}
-                        >
-                          {post.status === "Scheduled" && isLiveNow(post)
-                            ? "Live"
-                            : post.status}
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          {/* STATUS BADGE */}
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                              post.status,
+                              post
+                            )}`}
+                          >
+                            {post.status === "Scheduled" && isLiveNow(post)
+                              ? "Live"
+                              : post.status}
+                          </span>
+
+                          {/* PREMIUM STRIPE PROCESSING BAR */}
+                          {(post.status === "Uploading" ||
+                            post.status === "Processing") && (
+                              <div className="w-40">
+                                <div className="relative h-2 rounded-full bg-gray-200 overflow-hidden">
+
+                                  {/* Progress Fill */}
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                    style={{
+                                      width: `${post.uploadProgress || 0}%`,
+                                      background:
+                                        post.status === "Uploading"
+                                          ? "var(--accent-green)"
+                                          : "#16a34a",
+                                    }}
+                                  />
+
+                                  {/* Animated Stripe Overlay (Processing Only) */}
+                                  {post.status === "Processing" && (
+                                    <div className="absolute inset-0 overflow-hidden">
+                                      <div className="h-full w-full stripe-animation opacity-40" />
+                                    </div>
+                                  )}
+                                </div>
+
+                                <p className="text-xs mt-1 text-[var(--text-secondary)]">
+                                  {post.status === "Uploading"
+                                    ? `Uploading ${post.uploadProgress || 0}%`
+                                    : "Processing securely..."}
+                                </p>
+                              </div>
+                            )}
+                        </div>
 
                       </td>
                       <td className="px-6 py-4">
@@ -2051,12 +2160,12 @@ xhr.onload = async () => {
   );
 
   // ---------- final return ----------
- return (
-  <>
-    <Toaster position="top-right" />
-    {currentView === "createPost"
-      ? renderCreatePost()
-      : renderDashboard()}
-  </>
-);
+  return (
+    <>
+
+      {currentView === "createPost"
+        ? renderCreatePost()
+        : renderDashboard()}
+    </>
+  );
 }
