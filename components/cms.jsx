@@ -96,6 +96,7 @@ export default function CMSComplete() {
   const [activeTab, setActiveTab] = useState("pagesAndPosts");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadCompleteToastShown = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor)
   );
@@ -503,7 +504,8 @@ export default function CMSComplete() {
   // =============================
   const handleSavePost = async () => {
     if (isSaving) return; // 🔒 Prevent duplicate clicks
-    setIsSaving(true); // 🔥 THIS WAS MISSING
+    uploadCompleteToastShown.current = false;
+    setIsSaving(true);
     try {
       if (!postData.title.trim()) {
         alert("Please enter a title.");
@@ -632,13 +634,17 @@ export default function CMSComplete() {
 
         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
-        // 🔥 Upload progress
+        // 🔥 Upload progress + "Upload complete, saving…" at 100%
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const percent = Math.round(
               (event.loaded / event.total) * 100
             );
             setUploadProgress(percent);
+            if (percent === 100 && !uploadCompleteToastShown.current) {
+              uploadCompleteToastShown.current = true;
+              toast.loading("Upload complete, saving…", { id: "cms-upload-status" });
+            }
           }
         };
 xhr.onload = async () => {
@@ -706,11 +712,8 @@ xhr.onload = async () => {
         // ➕ Add new post at top
         setPostsData((prev) => [formattedPost, ...prev]);
       }
-      toast.success("Saved successfully!");
+      toast.success("Saved!", { id: "cms-upload-status" });
       setCurrentView("dashboard");
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
 
       setIsEditing(false);
       setEditingId(null);

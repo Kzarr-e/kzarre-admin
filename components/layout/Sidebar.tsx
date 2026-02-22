@@ -163,10 +163,13 @@ useEffect(() => {
   const [permissions, setPermissions] = useState<string[]>([]);
 
 
-  useEffect(() => {
-    const perms = localStorage.getItem("permissions");
-    setPermissions(perms ? JSON.parse(perms) : []);
-  }, []);
+useEffect(() => {
+  const storedUser = sessionStorage.getItem("auth_user");
+  if (storedUser) {
+    const parsed = JSON.parse(storedUser);
+    setPermissions(parsed.permissions || []);
+  }
+}, []);
 
 const hasPermission = (permission: string): boolean => {
   if (profile.role === "SuperAdmin") return true;
@@ -174,13 +177,13 @@ const hasPermission = (permission: string): boolean => {
 };
 
 
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const perms = localStorage.getItem("permissions");
-      setPermissions(perms ? JSON.parse(perms) : []);
-    }
-  }, []);
+useEffect(() => {
+  const storedUser = sessionStorage.getItem("auth_user");
+  if (storedUser) {
+    const parsed = JSON.parse(storedUser);
+    setPermissions(parsed.permissions || []);
+  }
+}, []);
 
   return (
     <>
