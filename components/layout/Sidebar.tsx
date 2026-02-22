@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuthStore } from "@/lib/auth";
+import { authApi } from '@/lib/auth';
 
 import {
   LayoutDashboard,
@@ -13,8 +13,10 @@ import {
   ShoppingCart,
   Truck,
   TrendingUp,
+  DollarSign,
   Shield,
   Settings,
+  MoreVertical,
   Menu,
   Handshake,
   X,
@@ -25,42 +27,54 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { user } = useAuthStore(); // 🔥 SINGLE SOURCE OF TRUTH
-
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const [hoveredItem, setHoveredItem] = useState<{
-    label: string;
-    top: number;
-  } | null>(null);
+const isActive = (href: string) =>
+  pathname === href || pathname.startsWith(href + "/");
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
+  const [profile, setProfile] = useState({
+    name: "User",
+    email: "user@system.com",
+    role: "Admin",
+  });
 
-  const profile = {
-    name: user?.name || "User",
-    email: user?.email || "user@system.com",
-    role: user?.role || "Admin",
-  };
+const initials =
+  profile?.name
+    ?.split(" ")
+    ?.map(n => n[0])
+    ?.join("")
+    ?.slice(0, 2)
+    ?.toUpperCase() || "U";
 
-  const initials =
-    profile.name
-      ?.split(" ")
-      ?.map(n => n[0])
-      ?.join("")
-      ?.slice(0, 2)
-      ?.toUpperCase() || "U";
 
-  // 🔥 PERMISSION CHECK — ONLY FROM ZUSTAND
-  const hasPermission = (permission: string): boolean => {
-    const role = user?.role?.toLowerCase();
-
-    // SuperAdmin sees everything
-    if (role === "superadmin" || user?.isSuperAdmin) return true;
-
-    return user?.permissions?.includes(permission) || false;
-  };
+useEffect(() => {
+  console.log("Sidebar: Fetching user profile...");
+  authApi.authenticatedFetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/profile/me`)
+    .then(res => {
+      console.log("Sidebar: Profile response status:", res.status);
+      if (!res.ok) {
+        console.error("Sidebar: Failed to fetch profile");
+        return null;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data) {
+        console.log("Sidebar: Profile data:", data);
+        setProfile({
+          name: data.name,
+          email: data.email,
+          role: data.role,
+        });
+      }
+    })
+    .catch(error => {
+      console.error("Sidebar: Error fetching profile:", error);
+    });
+    .catch(() => {});
+}, []);
 
 
   const menuItems = [
@@ -137,7 +151,38 @@ export default function Sidebar() {
       permission: "manage_settings",
     },
   ];
-  // Load role from sessionStorage
+  // Load role from localStorage
+  const [role, setRole] = useState("");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("role") || "");
+    }
+  }, []);
+
+  // Define role-wise menu visibility
+  const [permissions, setPermissions] = useState<string[]>([]);
+
+
+  useEffect(() => {
+    const perms = localStorage.getItem("permissions");
+    setPermissions(perms ? JSON.parse(perms) : []);
+  }, []);
+
+const hasPermission = (permission: string): boolean => {
+  if (profile.role === "SuperAdmin") return true;
+  return permissions.includes(permission);
+};
+
+
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const perms = localStorage.getItem("permissions");
+      setPermissions(perms ? JSON.parse(perms) : []);
+    }
+  }, []);
+
   return (
     <>
       {/* Mobile Toggle Button */}
@@ -166,8 +211,7 @@ export default function Sidebar() {
           border-r border-[var(--sidebar-border)]
           text-[var(--text-primary)]
           h-screen flex flex-col transition-all duration-300
-         overflow-y-auto overflow-x-visible
-  fixed lg:relative z-40 lg:z-auto
+          overflow-y-auto fixed lg:relative z-40 lg:z-auto
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0`}
       >
@@ -200,31 +244,21 @@ export default function Sidebar() {
 
                 return (
                   <li key={item.label}>
-                   <Link
-  href={item.href}
-  onMouseEnter={(e) => {
-    if (!isOpen) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setHoveredItem({
-        label: item.label,
-        top: rect.top + rect.height / 2,
-      });
-    }
-  }}
-  onMouseLeave={() => setHoveredItem(null)}
-  className={`
-    w-full flex items-center gap-3 px-4 py-3 rounded-lg 
-    transition-all
-    ${active
-      ? "bg-[var(--accent-green)] text-black font-semibold"
-      : "hover:bg-[var(--background-card)]"
-    }
-  `}
->
-  <Icon size={22} />
-  {isOpen && <span className="text-sm">{item.label}</span>}
-</Link>
-
+                    <Link
+                      href={item.href}
+                      className={`
+              w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+              transition-all
+              ${active
+                          ? "bg-[var(--accent-green)] text-black font-semibold"
+                          : "hover:bg-[var(--background-card)]"
+                        }`}
+                    >
+                      <Icon size={22} />
+                      {isOpen && (
+                        <span className="text-sm font-small">{item.label}</span>
+                      )}
+                    </Link>
                   </li>
                 );
               })}
@@ -277,30 +311,6 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
-
-      {hoveredItem && (
-  <div
-    className="
-      fixed z-[9999]
-      px-3 py-1
-      rounded-md text-sm whitespace-nowrap
-      bg-[var(--background-card)]
-      text-[var(--text-primary)]
-      border border-[var(--sidebar-border)]
-      shadow-lg
-      pointer-events-none
-      transition-opacity duration-150
-    "
-    style={{
-      top: hoveredItem.top,
-      left: 80, // aligns just outside collapsed sidebar
-      transform: "translateY(-50%)",
-    }}
-  >
-    {hoveredItem.label}
-  </div>
-)}
-
     </>
   );
 }

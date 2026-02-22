@@ -241,7 +241,7 @@ export const authApi = {
       console.warn("Access token expired → refreshing...");
 
       const refreshRes = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/auth/refresh`,
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
         {
           method: "POST",
           headers: {
