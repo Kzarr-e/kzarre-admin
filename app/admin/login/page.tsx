@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
-
 
 export default function AdminLogin() {
+  const router = useRouter();
   const { login } = useAuthStore();
+
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,6 @@ export default function AdminLogin() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,77 +34,48 @@ export default function AdminLogin() {
       });
 
       const data = await response.json();
-      console.log("FULL LOGIN RESPONSE:", data);
 
       if (!response.ok) {
         throw new Error(data.message || "Invalid credentials");
       }
 
-      // ✅ REQUIRED TOKENS
-      const accessToken = data.accessToken;
-      const refreshToken = data.refreshToken;
+      const { accessToken, refreshToken, admin } = data;
 
       if (!accessToken || !refreshToken) {
-        throw new Error("Access or refresh token missing from backend");
+        throw new Error("Authentication tokens missing");
       }
 
-      console.log("ACCESS TOKEN:", accessToken);
-      console.log("REFRESH TOKEN:", refreshToken);
+      // 🔐 Store tokens (session OR local if remember)
+      const storage = remember ? localStorage : sessionStorage;
 
-      // ✅ PERMISSIONS
-      const userPermissions = data.admin.permissions || [];
-      const defaultPermissions = [
-        "view_dashboard",
-        "manage_users",
-        "create_user",
-        "update_user",
-        "delete_user",
-        "manage_cms",
-        "view_analytics",
-        "manage_orders",
-        "manage_inventory",
-        "manage_stories",
-        "manage_shipping",
-        "view_crm",
-        "manage_marketing",
-        "manage_security",
-        "manage_settings",
-      ];
+      storage.setItem("access_token", accessToken);
+      storage.setItem("refresh_token", refreshToken);
 
-      const finalPermissions =
-        userPermissions.length > 0 ? userPermissions : defaultPermissions;
-
-      const userRole = data.admin.role;
-
-      // 🔐 STORE TOKENS (SESSION ONLY — CORRECT)
-      sessionStorage.setItem("access_token", accessToken);
-      sessionStorage.setItem("refresh_token", refreshToken);
-
-      // 🔐 OPTIONAL USER SNAPSHOT
-      sessionStorage.setItem(
+      storage.setItem(
         "auth_user",
         JSON.stringify({
-          _id: data.admin._id,
-          name: data.admin.name,
-          email: data.admin.email,
-          role: userRole,
-          permissions: finalPermissions,
+          _id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          permissions: admin.permissions || [],
         })
       );
 
-      // ✅ UPDATE ZUSTAND (ACCESS TOKEN ONLY)
-      login(accessToken, {
-        _id: data.admin._id,
-        name: data.admin.name,
-        email: data.admin.email,
-        role: userRole,
-        permissions: finalPermissions,
-      });
+      // Clear opposite storage to avoid conflict
+      if (remember) {
+        sessionStorage.clear();
+      } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("auth_user");
+      }
 
-      // 🚀 REDIRECT
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 300);
+      // Zustand update
+      login(accessToken, admin);
+
+      // 🚀 Redirect safely
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err?.message || "Something went wrong");
     } finally {
@@ -112,18 +83,17 @@ export default function AdminLogin() {
     }
   };
 
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
 
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900">
             Admin Login
           </h1>
-          <p className="text-gray-500 text-sm">
-            Welcome back! Please sign in to continue.
+          <p className="text-gray-500 text-sm mt-2">
+            Welcome back! Please sign in.
           </p>
         </div>
 
@@ -134,8 +104,8 @@ export default function AdminLogin() {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -145,7 +115,7 @@ export default function AdminLogin() {
               value={form.email}
               onChange={handleChange}
               placeholder="Email address"
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
               required
             />
           </div>
@@ -159,13 +129,13 @@ export default function AdminLogin() {
               value={form.password}
               onChange={handleChange}
               placeholder="Password"
-              className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-3 text-gray-400"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -178,21 +148,25 @@ export default function AdminLogin() {
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="accent-indigo-500 rounded-sm"
+                className="accent-indigo-600"
               />
-
               Remember me
             </label>
-            <a href="#" className="hover:text-indigo-600 transition-colors">
+
+            <button
+              type="button"
+              onClick={() => router.push("/forgot-password")}
+              className="text-indigo-600 hover:underline"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
 
-          {/* Button */}
+          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
