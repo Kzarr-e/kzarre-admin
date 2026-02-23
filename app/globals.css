@@ -118,6 +118,21 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.processing-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(34,197,94,0.2) 25%,
+    rgba(34,197,94,0.6) 50%,
+    rgba(34,197,94,0.2) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
 .stripe-animation {
   background-image: repeating-linear-gradient(
     45deg,

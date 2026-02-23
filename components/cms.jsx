@@ -97,7 +97,7 @@ export default function CMSComplete() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadCompleteToastShown = useRef(false);
-  
+
   const redirectTriggered = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor)
@@ -695,16 +695,16 @@ export default function CMSComplete() {
           setUploadProgress(percent);
 
           // 🔥 Update dashboard row progress
-         setPostsData(prev =>
-  prev.map(p =>
-    p._id === "uploading-temp"
-      ? { ...p, uploadProgress: percent }
-      : p
-  )
-);
+          setPostsData(prev =>
+            prev.map(p =>
+              p._id === "uploading-temp"
+                ? { ...p, uploadProgress: percent }
+                : p
+            )
+          );
 
           // 🚀 Instant redirect when upload completes
-        
+
         };
         xhr.onload = async () => {
           if (xhr.status === 401) {
@@ -738,18 +738,18 @@ export default function CMSComplete() {
             const responseData = JSON.parse(xhr.responseText);
 
             // mark as processing
-           setPostsData(prev =>
-  prev.map(p =>
-    p._id === "uploading-temp"
-      ? {
-          ...p,
-          _id: responseData._id,
-          status: "Processing",
-          uploadProgress: 100
-        }
-      : p
-  )
-);
+            setPostsData(prev =>
+              prev.map(p =>
+                p._id === "uploading-temp"
+                  ? {
+                    ...p,
+                    _id: responseData._id,
+                    status: "Processing",
+                    uploadProgress: 100
+                  }
+                  : p
+              )
+            );
             resolve(responseData);
           } else {
             reject(new Error("Upload failed"));
@@ -761,23 +761,23 @@ export default function CMSComplete() {
         xhr.send(formData);
       });
 
-    setPostsData(prev =>
-  prev.map(p =>
-    p._id === data._id || p._id === "uploading-temp"
-      ? {
-          _id: data._id,
-          title: data.title || postData.title,
-          type: data.displayTo || postData.displayTo,
-          author: data.author || "You",
-          status: "Processing",
-          uploadProgress: 100,
-          visibleAt: data.visibleAt,
-          lastModified: new Date().toLocaleDateString(),
-          url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
-        }
-      : p
-  )
-);
+      setPostsData(prev =>
+        prev.map(p =>
+          p._id === data._id || p._id === "uploading-temp"
+            ? {
+              _id: data._id,
+              title: data.title || postData.title,
+              type: data.displayTo || postData.displayTo,
+              author: data.author || "You",
+              status: "Processing",
+              uploadProgress: 100,
+              visibleAt: data.visibleAt,
+              lastModified: new Date().toLocaleDateString(),
+              url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
+            }
+            : p
+        )
+      );
 
       if (isEditing) {
         // 🔄 Update existing post
@@ -1987,11 +1987,12 @@ export default function CMSComplete() {
                       <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                         {post.lastModified}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-2">
-                          {/* STATUS BADGE */}
+                      <td className="px-6 py-4 align-middle">
+                        <div className="flex items-center gap-3 min-h-[32px]">
+
+                          {/* Status Badge */}
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getStatusColor(
                               post.status,
                               post
                             )}`}
@@ -2001,41 +2002,31 @@ export default function CMSComplete() {
                               : post.status}
                           </span>
 
-                          {/* PREMIUM STRIPE PROCESSING BAR */}
+                          {/* Compact Progress Bar */}
                           {(post.status === "Uploading" ||
                             post.status === "Processing") && (
-                              <div className="w-40">
-                                <div className="relative h-2 rounded-full bg-gray-200 overflow-hidden">
-
-                                  {/* Progress Fill */}
+                              <div className="flex items-center gap-2 w-40">
+                                <div className="relative h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                                   <div
-                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                    className="h-full transition-all duration-300"
                                     style={{
                                       width: `${post.uploadProgress || 0}%`,
-                                      background:
+                                      backgroundColor:
                                         post.status === "Uploading"
                                           ? "var(--accent-green)"
                                           : "#16a34a",
                                     }}
                                   />
-
-                                  {/* Animated Stripe Overlay (Processing Only) */}
-                                  {post.status === "Processing" && (
-                                    <div className="absolute inset-0 overflow-hidden">
-                                      <div className="h-full w-full stripe-animation opacity-40" />
-                                    </div>
-                                  )}
                                 </div>
 
-                                <p className="text-xs mt-1 text-[var(--text-secondary)]">
-                                  {post.status === "Uploading"
-                                    ? `Uploading ${post.uploadProgress || 0}%`
-                                    : "Processing securely..."}
-                                </p>
+                                {post.status === "Uploading" && (
+                                  <span className="text-xs text-[var(--text-secondary)] w-8 text-right">
+                                    {post.uploadProgress || 0}%
+                                  </span>
+                                )}
                               </div>
                             )}
                         </div>
-
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
