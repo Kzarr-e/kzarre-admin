@@ -21,8 +21,6 @@ import {
   Image as ImageIcon,
   FileSpreadsheet,
 } from "lucide-react";
-import Cookies from "js-cookie";
-
 import Placeholder from "@tiptap/extension-placeholder";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
@@ -167,11 +165,11 @@ function SortableImage({
 export default function AdminStories() {
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
 const getAuthHeaders = (): Record<string, string> => {
-  const t = Cookies.get("access_token");
+  const t =
+    (typeof window !== "undefined" && (sessionStorage.getItem("access_token") || localStorage.getItem("access_token"))) ||
+    null;
   if (!t) return {};
-  return {
-    Authorization: `Bearer ${t}`,
-  };
+  return { Authorization: `Bearer ${t}` };
 };
 
 const [previewStory, setPreviewStory] = useState<Story | null>(null);

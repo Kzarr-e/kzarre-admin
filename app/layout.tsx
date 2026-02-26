@@ -11,6 +11,7 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.adminkzarre.com"),
   title: "KZARRĒ Admin",
   description: "Admin Dashboard Platform",
   icons: {

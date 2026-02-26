@@ -4,13 +4,13 @@ import { useEffect } from "react";
 import { startSilentRefreshInterval, stopSilentRefreshInterval } from "@/lib/auth";
 
 /**
- * Starts silent access-token refresh every 10 min when the user has a session.
- * Cleans up the interval on unmount (e.g. logout clears it via auth store).
+ * Restores tokens from localStorage (Remember me) then starts silent access-token
+ * refresh every 10 min. Cleans up the interval on unmount.
  */
 export default function SilentRefresh() {
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("refresh_token")) {
-      startSilentRefreshInterval();
+    if (typeof window !== "undefined") {
+      startSilentRefreshInterval(); // restores from localStorage and starts interval if refresh_token exists
     }
     return () => stopSilentRefreshInterval();
   }, []);

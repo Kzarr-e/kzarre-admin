@@ -1,31 +1,41 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 const API = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
+
+function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token");
+}
+function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
+}
+function setStoredAccessToken(token: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("access_token", token);
+  if (localStorage.getItem("refresh_token")) localStorage.setItem("access_token", token);
+}
 
 export default function useAuth() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 REFRESH ACCESS TOKEN (BEARER-ONLY)
   const refreshAccessToken = useCallback(async () => {
     try {
-      const refreshToken = sessionStorage.getItem("refresh_token");
+      const refreshToken = getStoredRefreshToken();
       if (!refreshToken) return null;
 
-      const res = await fetch(`${API}/api/auth/refresh`, {
+      const res = await fetch(`${API}/api/admin/refresh`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${refreshToken}`, // ✅ HERE
-        },
+        headers: { Authorization: `Bearer ${refreshToken}` },
       });
 
       if (!res.ok) return null;
 
       const data = await res.json();
       if (data?.accessToken) {
-        sessionStorage.setItem("access_token", data.accessToken);
+        setStoredAccessToken(data.accessToken);
         setAccessToken(data.accessToken);
         return data.accessToken;
       }
@@ -36,13 +46,9 @@ export default function useAuth() {
     }
   }, []);
 
-  // 🔄 INITIAL LOAD
   useEffect(() => {
-    const storedAccess = sessionStorage.getItem("access_token");
-    if (storedAccess) {
-      setAccessToken(storedAccess);
-    }
-
+    const storedAccess = getStoredAccessToken();
+    if (storedAccess) setAccessToken(storedAccess);
     refreshAccessToken().finally(() => setLoading(false));
   }, [refreshAccessToken]);
 

@@ -34,9 +34,35 @@ const API_BASE =
 const SILENT_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
 
+// Use sessionStorage first, then localStorage (so "Remember me" works with refresh)
+function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token");
+}
+function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
+}
+function setStoredAccessToken(token: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("access_token", token);
+  if (localStorage.getItem("refresh_token")) localStorage.setItem("access_token", token);
+}
+
+/** Call on app load so "Remember me" tokens in localStorage are available for refresh. */
+export function restoreTokensFromLocalStorage(): void {
+  if (typeof window === "undefined") return;
+  const localRefresh = localStorage.getItem("refresh_token");
+  const localAccess = localStorage.getItem("access_token");
+  if (localRefresh && !sessionStorage.getItem("refresh_token")) {
+    sessionStorage.setItem("refresh_token", localRefresh);
+    if (localAccess) sessionStorage.setItem("access_token", localAccess);
+  }
+}
+
 async function refreshAccessTokenSilent(): Promise<boolean> {
   if (typeof window === "undefined") return false;
-  const refreshToken = sessionStorage.getItem("refresh_token");
+  const refreshToken = getStoredRefreshToken();
   if (!refreshToken) return false;
   try {
     const res = await fetch(`${API_BASE}/api/admin/refresh`, {
@@ -47,7 +73,7 @@ async function refreshAccessTokenSilent(): Promise<boolean> {
     const data = await res.json();
     const newAccessToken = data?.accessToken;
     if (!newAccessToken) return false;
-    sessionStorage.setItem("access_token", newAccessToken);
+    setStoredAccessToken(newAccessToken);
     useAuthStore.setState({ token: newAccessToken });
     return true;
   } catch {
@@ -61,7 +87,8 @@ export function startSilentRefreshInterval(): void {
     refreshIntervalId = null;
   }
   if (typeof window === "undefined") return;
-  if (!sessionStorage.getItem("refresh_token")) return;
+  restoreTokensFromLocalStorage();
+  if (!getStoredRefreshToken()) return;
   refreshIntervalId = setInterval(refreshAccessTokenSilent, SILENT_REFRESH_INTERVAL_MS);
 }
 
@@ -143,6 +170,11 @@ export const useAuthStore = create<AuthState>()(
           sessionStorage.removeItem("auth-storage");
           sessionStorage.removeItem("permissions");
           sessionStorage.removeItem("role");
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("auth_user");
         }
 
         console.log("Auth Store: Logged out");
@@ -153,7 +185,7 @@ export const useAuthStore = create<AuthState>()(
       // =====================
    checkAuth: async () => {
   const now = Date.now();
-  const token = sessionStorage.getItem("access_token");
+  const token = getStoredAccessToken();
 
   if (!token) {
     set({ isAuthenticated: false, user: null });
@@ -238,7 +270,7 @@ export const useAuthStore = create<AuthState>()(
   if (typeof window === "undefined") return sessionStorage;
 
   // Use sessionStorage if token was saved there
-  const hasSessionToken = sessionStorage.getItem("access_token");
+  const hasSessionToken = getStoredAccessToken();
 
   return hasSessionToken ? sessionStorage : sessionStorage;
 }),
@@ -261,10 +293,10 @@ export const authApi = {
     options: RequestInit = {}
   ) => {
     const getAccessToken = () =>
-      sessionStorage.getItem("access_token");
+      getStoredAccessToken();
 
     const refreshToken = () =>
-      sessionStorage.getItem("refresh_token");
+      getStoredRefreshToken();
 
     let accessToken = getAccessToken();
 
@@ -296,8 +328,6 @@ export const authApi = {
 
       if (!refreshRes.ok) {
         console.error("Refresh failed → logout");
-
-        sessionStorage.clear();
         useAuthStore.getState().logout();
         throw new Error("Session expired");
       }
@@ -306,14 +336,13 @@ export const authApi = {
       const newAccessToken = refreshData.accessToken;
 
       if (!newAccessToken) {
-        sessionStorage.clear();
         useAuthStore.getState().logout();
         throw new Error("Invalid refresh response");
       }
 
       // 🔐 Save new access token
-      sessionStorage.setItem("access_token", newAccessToken);
-      useAuthStore.setState({ token: newAccessToken });
+      setStoredAccessToken(newAccessToken);
+    useAuthStore.setState({ token: newAccessToken });
 
       console.log("Access token refreshed");
 
@@ -330,7 +359,6 @@ export const authApi = {
 
     // ❌ Still unauthorized after retry → logout
     if (response.status === 401) {
-      sessionStorage.clear();
       useAuthStore.getState().logout();
       throw new Error("Authentication expired");
     }

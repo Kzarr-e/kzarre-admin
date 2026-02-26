@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import {
   Mail,
   Users,
@@ -32,11 +31,11 @@ export default function MarketingCenter() {
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
 
  const getAuthHeaders = (): Record<string, string> => {
-  const t = Cookies.get("access_token");
+  const t =
+    (typeof window !== "undefined" && (sessionStorage.getItem("access_token") || localStorage.getItem("access_token"))) ||
+    null;
   if (!t) return {};
-  return {
-    Authorization: `Bearer ${t}`,
-  };
+  return { Authorization: `Bearer ${t}` };
 };
 
 

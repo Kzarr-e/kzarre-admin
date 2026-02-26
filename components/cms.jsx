@@ -717,7 +717,7 @@ useEffect(() => {
         };
         xhr.onload = async () => {
           if (xhr.status === 401) {
-            const refreshToken = sessionStorage.getItem("refresh_token");
+            const refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token");
 
             const refreshRes = await fetch(
               `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
@@ -730,13 +730,20 @@ useEffect(() => {
             );
 
             if (!refreshRes.ok) {
-              sessionStorage.clear();
+              sessionStorage.removeItem("access_token");
+              sessionStorage.removeItem("refresh_token");
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
               window.location.href = "/admin-login";
               return;
             }
 
             const data = await refreshRes.json();
-            sessionStorage.setItem("access_token", data.accessToken);
+            const newAccess = data?.accessToken;
+            if (newAccess) {
+              sessionStorage.setItem("access_token", newAccess);
+              if (localStorage.getItem("refresh_token")) localStorage.setItem("access_token", newAccess);
+            }
 
             // 🔁 Retry upload
             window.location.reload();
