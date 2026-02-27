@@ -43,8 +43,8 @@ const deleteUser = async (user, refresh) => {
   if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
 
   const token =
-    sessionStorage.getItem("superadmin_token") ||
-    sessionStorage.getItem("admin_token");
+    sessionStorage.getItem("access_token") ||
+    sessionStorage.getItem("refresh_token");
 
   try {
     const res = await fetch(
@@ -62,7 +62,7 @@ const deleteUser = async (user, refresh) => {
 
     alert("✅ User deleted successfully");
     // refresh list
-    setRefreshKey(k => k + 1);
+    refresh?.();
 
   } catch (err) {
     alert("❌ " + err.message);
@@ -73,8 +73,8 @@ const toggleUserStatus = async (user) => {
   const newStatus = !user.isActive;
 
   const token =
-    sessionStorage.getItem("superadmin_token") ||
-    sessionStorage.getItem("admin_token");
+    sessionStorage.getItem("access_token") ||
+    sessionStorage.getItem("refresh_token");
 
   try {
     const res = await fetch(
@@ -136,8 +136,8 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     }
 
     const token =
-      sessionStorage.getItem("superadmin_token") ||
-      sessionStorage.getItem("admin_token");
+      sessionStorage.getItem("access_token") ||
+      sessionStorage.getItem("refresh_token");
 
     try {
       setLoading(true);
@@ -268,8 +268,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   );
 };
 
-
-
 const usePermissions = () => {
   const [permissions, setPermissions] = useState([]);
 
@@ -296,8 +294,6 @@ const usePermissions = () => {
 
   return permissions;
 };
-
-
 
 const UserList = ({ refreshKey, onEditPermissions }) => {
   const [users, setUsers] = useState([]);
@@ -461,8 +457,8 @@ const EditPermissionsModal = ({ user, onClose }) => {
 
   const save = async () => {
     const token =
-      sessionStorage.getItem("superadmin_token") ||
-      sessionStorage.getItem("admin_token");
+      sessionStorage.getItem("access_token") ||
+      sessionStorage.getItem("refresh_token");
 
     await fetch(
       `${API_BASE}/api/usersadmin/update-permissions/${user._id}`,
@@ -537,8 +533,8 @@ const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
     try {
       setSaving(true);
       const token =
-        sessionStorage.getItem("superadmin_token") ||
-        sessionStorage.getItem("admin_token");
+        sessionStorage.getItem("access_token") ||
+        sessionStorage.getItem("refresh_token");
 
       const res = await fetch(`${API_BASE}/api/usersadmin/roles`, {
         method: "POST",
@@ -777,8 +773,8 @@ const EditRoleModal = ({ role, onClose, onUpdated }) => {
     try {
       setSaving(true);
       const token =
-        sessionStorage.getItem("superadmin_token") ||
-        sessionStorage.getItem("admin_token");
+        sessionStorage.getItem("access_token") ||
+        sessionStorage.getItem("refresh_token");
 
       const res = await fetch(
         `${API_BASE}/api/usersadmin/roles/${role._id}`,
@@ -887,7 +883,7 @@ const deleteRole = async (roleId) => {
 
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
-  const token = sessionStorage.getItem("superadmin_token");
+  const token = sessionStorage.getItem("access_token");
 
   useEffect(() => {
     fetch(`${API_BASE}/api/activity`, {

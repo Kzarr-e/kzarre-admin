@@ -7,8 +7,8 @@ type TabType = "general" | "maintenance";
 const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
 const getToken = () =>
   typeof window !== "undefined"
-    ? sessionStorage.getItem("admin_token") ||
-    sessionStorage.getItem("superadmin_token")
+    ? sessionStorage.getItem("refresh_token") ||
+    sessionStorage.getItem("access_token")
     : null;
 
 
