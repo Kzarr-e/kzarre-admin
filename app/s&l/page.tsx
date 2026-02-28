@@ -320,7 +320,7 @@ export default function ShippingAndLogisticsPage() {
                     target="_blank"
                     className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded text-xs"
                   >
-                    🖨 Print Label
+                     Print Label
                   </a>
                 )}
 

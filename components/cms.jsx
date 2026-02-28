@@ -124,6 +124,7 @@ export default function CMSComplete() {
     setImageMetaTags(arrayMove(imageMetaTags, oldIndex, newIndex));
     setImageMetaDescriptions(arrayMove(imageMetaDescriptions, oldIndex, newIndex));
     setImageKeywords(arrayMove(imageKeywords, oldIndex, newIndex));
+    setImageShareLinks(arrayMove(imageShareLinks, oldIndex, newIndex));
   };
 
 
@@ -189,7 +190,7 @@ export default function CMSComplete() {
     metaTag: "",
     metaDescription: "",
     keywords: "",
-
+    shareLink: "",
     aboutQuoteText: "",
     aboutQuoteHighlight: "",
     aboutIntro: "",
@@ -206,7 +207,7 @@ export default function CMSComplete() {
     fontFamily: "inherit",
   });
 
-
+  const [imageShareLinks, setImageShareLinks] = useState([]);
   const [availableFonts, setAvailableFonts] = useState([]);
 
   useEffect(() => {
@@ -271,9 +272,9 @@ export default function CMSComplete() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content`
         );
-         console.log("Response status:", res.status);
+        console.log("Response status:", res.status);
         const data = await res.json();
-   console.log("CMS DATA:", data);
+        console.log("CMS DATA:", data);
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
             _id: item._id,
@@ -293,50 +294,50 @@ export default function CMSComplete() {
       } catch (err) {
         console.error("Failed to load CMS content:", err);
       }
-     
+
     };
 
-   fetchCMSPosts();
+    fetchCMSPosts();
   }, []);
 
-useEffect(() => {
-  const interval = setInterval(async () => {
-    setPostsData(prev => {
-      prev.forEach(async (post) => {
-        if (
-          post.status === "Uploading" ||
-          post.status === "Processing"
-        ) {
-          try {
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
-            );
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      setPostsData(prev => {
+        prev.forEach(async (post) => {
+          if (
+            post.status === "Uploading" ||
+            post.status === "Processing"
+          ) {
+            try {
+              const res = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
+              );
 
-            if (!res.ok) return;
+              if (!res.ok) return;
 
-            const data = await res.json();
+              const data = await res.json();
 
-            setPostsData(current =>
-              current.map(p =>
-                p._id === post._id
-                  ? {
+              setPostsData(current =>
+                current.map(p =>
+                  p._id === post._id
+                    ? {
                       ...p,
                       status: data.status,
                       uploadProgress: data.progress ?? p.uploadProgress,
                     }
-                  : p
-              )
-            );
-          } catch {}
-        }
+                    : p
+                )
+              );
+            } catch { }
+          }
+        });
+
+        return prev;
       });
+    }, 2000);
 
-      return prev;
-    });
-  }, 2000);
-
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
   // =============================
   // DRAG & DROP HANDLERS
   // =============================
@@ -494,6 +495,7 @@ useEffect(() => {
         setImageMetaTags(Array(count).fill(""));
         setImageMetaDescriptions(Array(count).fill(""));
         setImageKeywords(Array(count).fill(""));
+        setImageShareLinks(Array(count).fill(""));
       });
 
       return;
@@ -540,6 +542,7 @@ useEffect(() => {
     setImageMetaTags((prev) => prev.filter((_, i) => i !== index));
     setImageMetaDescriptions((prev) => prev.filter((_, i) => i !== index));
     setImageKeywords((prev) => prev.filter((_, i) => i !== index));
+    setImageShareLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
   // =============================
@@ -551,15 +554,15 @@ useEffect(() => {
     setIsSaving(true);
     // 🚀 Instantly add placeholder row
     const tempId = `temp-${Date.now()}`;
-   const tempPost = {
-  _id: tempId,
-  title: postData.title,
-  type: postData.displayTo,
-  author: "You",
-  status: "Uploading",
-  uploadProgress: 0,
-  lastModified: new Date().toLocaleDateString(),
-};
+    const tempPost = {
+      _id: tempId,
+      title: postData.title,
+      type: postData.displayTo,
+      author: "You",
+      status: "Uploading",
+      uploadProgress: 0,
+      lastModified: new Date().toLocaleDateString(),
+    };
 
     setPostsData(prev => [tempPost, ...prev]);
 
@@ -672,6 +675,7 @@ useEffect(() => {
         formData.append("metaTags", JSON.stringify(imageMetaTags));
         formData.append("metaDescriptions", JSON.stringify(imageMetaDescriptions));
         formData.append("imageKeywords", JSON.stringify(imageKeywords));
+        formData.append("shareLinks", JSON.stringify(imageShareLinks));
       }
 
 
@@ -706,7 +710,7 @@ useEffect(() => {
           // 🔥 Update dashboard row progress
           setPostsData(prev =>
             prev.map(p =>
-             p._id === tempId
+              p._id === tempId
                 ? { ...p, uploadProgress: percent }
                 : p
             )
@@ -753,28 +757,28 @@ useEffect(() => {
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseData = JSON.parse(xhr.responseText);
 
-          setPostsData(prev => {
-  // 1️⃣ Remove ALL temp uploading rows
-  const filtered = prev.filter(p => !String(p._id).startsWith("temp-"));
+            setPostsData(prev => {
+              // 1️⃣ Remove ALL temp uploading rows
+              const filtered = prev.filter(p => !String(p._id).startsWith("temp-"));
 
-  // 2️⃣ Add the real backend post at top
-  const realPost = {
-    _id: responseData._id,
-    title: responseData.title || postData.title,
-    type: responseData.displayTo || postData.displayTo,
-    author: responseData.author || "You",
-    status: responseData.status || "Pending Review",
-    uploadProgress: 100,
-    visibleAt: responseData.visibleAt,
-    lastModified: new Date().toLocaleDateString(),
-    url:
-      responseData.heroVideoUrl ||
-      responseData?.banners?.[0]?.imageUrl ||
-      "",
-  };
+              // 2️⃣ Add the real backend post at top
+              const realPost = {
+                _id: responseData._id,
+                title: responseData.title || postData.title,
+                type: responseData.displayTo || postData.displayTo,
+                author: responseData.author || "You",
+                status: responseData.status || "Pending Review",
+                uploadProgress: 100,
+                visibleAt: responseData.visibleAt,
+                lastModified: new Date().toLocaleDateString(),
+                url:
+                  responseData.heroVideoUrl ||
+                  responseData?.banners?.[0]?.imageUrl ||
+                  "",
+              };
 
-  return [realPost, ...filtered];
-});
+              return [realPost, ...filtered];
+            });
 
             resolve(responseData);
           } else {
@@ -787,7 +791,7 @@ useEffect(() => {
         xhr.send(formData);
       });
 
-      
+
 
       toast.success("Saved!", { id: "cms-upload-status" });
       setCurrentView("dashboard");
@@ -998,6 +1002,7 @@ useEffect(() => {
         metaTag: data.meta?.tag || "",
         metaDescription: data.meta?.description || "",
         keywords: data.meta?.keywords || "",
+        shareLink: data.shareLink || "",
       });
 
       // Load banner styling
@@ -1063,6 +1068,8 @@ useEffect(() => {
         const metaTags = sorted.map((i) => i.metaTag || "");
         const metaDescriptions = sorted.map((i) => i.metaDescription || "");
         const keywords = sorted.map((i) => i.keywords || "");
+        const shareLinks = sorted.map((i) => i.shareLink || "");
+
 
         // Then set everything together
         setUploadedMediaList(mediaList);
@@ -1071,6 +1078,7 @@ useEffect(() => {
         setImageMetaTags(metaTags);
         setImageMetaDescriptions(metaDescriptions);
         setImageKeywords(keywords);
+        setImageShareLinks(shareLinks);
       }
 
 
@@ -1410,6 +1418,18 @@ useEffect(() => {
                                   className="w-full px-3 py-2 mb-2 border rounded bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)]"
                                 />
 
+                                <input
+                                  type="text"
+                                  placeholder="Share Link (optional) — e.g. /product/123"
+                                  value={imageShareLinks[idx] || ""}
+                                  onChange={(e) => {
+                                    const copy = [...imageShareLinks];
+                                    copy[idx] = e.target.value;
+                                    setImageShareLinks(copy);
+                                  }}
+                                  className="w-full px-3 py-2 mb-2 border rounded bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)]"
+                                />
+
                                 {/* hidden meta fields (use if you want to set meta per image) */}
                                 <div style={{ display: "none" }}>
                                   <input
@@ -1576,6 +1596,25 @@ useEffect(() => {
               </div>
 
 
+            </div>
+            <div className="bg-[var(--background-card)] rounded-xl shadow-sm border border-[var(--sidebar-border)] p-6">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Redirect / Share Link (Optional)
+              </label>
+
+              <input
+                type="text"
+                value={postData.shareLink}
+                onChange={(e) =>
+                  setPostData((p) => ({ ...p, shareLink: e.target.value }))
+                }
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                placeholder="https://example.com or /men/product-name"
+              />
+
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                When users click this banner, they will be redirected to this link.
+              </p>
             </div>
 
             {/* ---------------- TEXT STYLING (ADDED HERE) ---------------- */}
