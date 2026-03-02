@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { toast } from "react-hot-toast";
 
 export interface User {
   _id: string;
@@ -22,7 +23,7 @@ export interface AuthState {
 
   login: (token: string, user: User) => void;
   logout: () => void;
-  
+
   checkAuth: () => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
 }
@@ -62,36 +63,55 @@ export function restoreTokensFromLocalStorage(): void {
 
 async function refreshAccessTokenSilent(): Promise<boolean> {
   if (typeof window === "undefined") return false;
+
   const refreshToken = getStoredRefreshToken();
+
   if (!refreshToken) {
     console.log("[Auth] Silent refresh skipped – no refresh token");
     return false;
   }
+
   console.log("[Auth] Silent refresh: calling /api/admin/refresh");
+
   try {
     const res = await fetch(`${API_BASE}/api/admin/refresh`, {
       method: "POST",
       headers: { Authorization: `Bearer ${refreshToken}` },
     });
+
     if (!res.ok) {
-      console.warn(
-        "[Auth] Silent refresh failed with status",
-        res.status
-      );
+      const errorData = await res.json().catch(() => null);
+
+      if (errorData?.code === "SESSION_REPLACED") {
+        console.warn("Session replaced by another login");
+        toast.error("Logged in from another device. Session ended.");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 800);
+      }
+
+      useAuthStore.getState().logout();
+      stopSilentRefreshInterval();
       return false;
     }
+
     const data = await res.json();
     const newAccessToken = data?.accessToken;
+
     if (!newAccessToken) {
-      console.warn("[Auth] Silent refresh: no accessToken in response");
+      useAuthStore.getState().logout();
       return false;
     }
+
     setStoredAccessToken(newAccessToken);
     useAuthStore.setState({ token: newAccessToken });
+
     console.log("[Auth] Silent refresh succeeded – access token updated");
+
     return true;
   } catch (err) {
     console.error("[Auth] Silent refresh error", err);
+    useAuthStore.getState().logout();
     return false;
   }
 }
@@ -174,8 +194,24 @@ export const useAuthStore = create<AuthState>()(
       // =====================
       // LOGOUT
       // =====================
-      logout: () => {
+      logout: async () => {
+        try {
+          const token = getStoredAccessToken();
+
+          if (token) {
+            await fetch(`${API_BASE}/api/admin/logout`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+        } catch (err) {
+          console.warn("Backend logout failed (continuing cleanup)");
+        }
+
         stopSilentRefreshInterval();
+
         set({
           token: null,
           user: null,
@@ -190,14 +226,9 @@ export const useAuthStore = create<AuthState>()(
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.removeItem("auth-storage");
-          sessionStorage.removeItem("permissions");
-          sessionStorage.removeItem("role");
-          sessionStorage.removeItem("access_token");
-          sessionStorage.removeItem("refresh_token");
+          sessionStorage.clear();
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
-          localStorage.removeItem("auth_user");
         }
 
         console.log("Auth Store: Logged out");
@@ -206,72 +237,72 @@ export const useAuthStore = create<AuthState>()(
       // =====================
       // CHECK AUTH (🔥 CORE FIX)
       // =====================
-   checkAuth: async () => {
-  const now = Date.now();
-  const token = getStoredAccessToken();
+      checkAuth: async () => {
+        const now = Date.now();
+        const token = getStoredAccessToken();
 
-  if (!token) {
-    set({ isAuthenticated: false, user: null });
-    return false;
-  }
+        if (!token) {
+          set({ isAuthenticated: false, user: null });
+          return false;
+        }
 
-  if (
-    authVerificationCache.result !== null &&
-    now - authVerificationCache.timestamp < authVerificationCache.ttl
-  ) {
-    return authVerificationCache.result;
-  }
+        if (
+          authVerificationCache.result !== null &&
+          now - authVerificationCache.timestamp < authVerificationCache.ttl
+        ) {
+          return authVerificationCache.result;
+        }
 
-  try {
-    set({ isLoading: true });
+        try {
+          set({ isLoading: true });
 
-    const response = await fetchWithAuth(
-      `${API_BASE}/api/auth/verify`,
-      {
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      }
-    );
+          const response = await fetchWithAuth(
+            `${API_BASE}/api/auth/verify`,
+            {
+              headers: {
+                "Cache-Control": "no-cache",
+              },
+            }
+          );
 
-    const isAuthenticated = response.ok;
+          const isAuthenticated = response.ok;
 
-    authVerificationCache = {
-      result: isAuthenticated,
-      timestamp: now,
-      ttl: isAuthenticated ? 30000 : 5000,
-    };
+          authVerificationCache = {
+            result: isAuthenticated,
+            timestamp: now,
+            ttl: isAuthenticated ? 30000 : 5000,
+          };
 
-    if (!isAuthenticated) {
-      set({ isAuthenticated: false, user: null, token: null });
-      return false;
-    }
+          if (!isAuthenticated) {
+            set({ isAuthenticated: false, user: null, token: null });
+            return false;
+          }
 
-    const data = await response.json();
+          const data = await response.json();
 
-    const normalizedUser: User = {
-      _id: data.user._id,
-      name: data.user.name,
-      email: data.user.email,
-      role: normalizeRole(data.user.role),
-      permissions: data.user.permissions || [],
-      isSuperAdmin: data.user.isSuperAdmin ?? false,
-    };
+          const normalizedUser: User = {
+            _id: data.user._id,
+            name: data.user.name,
+            email: data.user.email,
+            role: normalizeRole(data.user.role),
+            permissions: data.user.permissions || [],
+            isSuperAdmin: data.user.isSuperAdmin ?? false,
+          };
 
-    set({
-      user: normalizedUser,
-      isAuthenticated: true,
-      isLoading: false,
-    });
+          set({
+            user: normalizedUser,
+            isAuthenticated: true,
+            isLoading: false,
+          });
 
-    return true;
-  } catch (error) {
-    set({ isAuthenticated: false, user: null, token: null });
-    return false;
-  } finally {
-    set({ isLoading: false });
-  }
-},
+          return true;
+        } catch (error) {
+          set({ isAuthenticated: false, user: null, token: null });
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
 
       // =====================
       // PERMISSIONS
@@ -289,14 +320,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-     storage: createJSONStorage(() => {
-  if (typeof window === "undefined") return sessionStorage;
+      storage: createJSONStorage(() => {
+        if (typeof window === "undefined") return sessionStorage;
 
-  // Use sessionStorage if token was saved there
-  const hasSessionToken = getStoredAccessToken();
+        // Use sessionStorage if token was saved there
+        const hasSessionToken = getStoredAccessToken();
 
-  return hasSessionToken ? sessionStorage : sessionStorage;
-}),
+        return hasSessionToken ? sessionStorage : sessionStorage;
+      }),
 
       partialize: (state) => ({
         user: state.user,
@@ -350,8 +381,20 @@ export const authApi = {
       );
 
       if (!refreshRes.ok) {
-        console.error("Refresh failed → logout");
+        const errorData = await refreshRes.json().catch(() => null);
+
+        if (
+          errorData?.code === "SESSION_REPLACED" ||
+          errorData?.code === "REFRESH_EXPIRED"
+        ) {
+          toast.error("Session expired. Please login again.");
+
+        }
+
         useAuthStore.getState().logout();
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 800);
         throw new Error("Session expired");
       }
 
@@ -365,7 +408,7 @@ export const authApi = {
 
       // 🔐 Save new access token
       setStoredAccessToken(newAccessToken);
-    useAuthStore.setState({ token: newAccessToken });
+      useAuthStore.setState({ token: newAccessToken });
 
       console.log("Access token refreshed");
 
