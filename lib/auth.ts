@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { toast } from "react-hot-toast";
+import { socket } from "@/app/lib/socket";
 
 export interface User {
   _id: string;
@@ -187,6 +188,14 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
         });
 
+        if (socket && normalizedUser._id) {
+          if (!socket.connected) {
+            socket.connect();
+          }
+
+          socket.emit("register_admin", normalizedUser._id);
+        }
+
         startSilentRefreshInterval();
         console.log("Auth Store: Login successful, state updated");
       },
@@ -194,42 +203,49 @@ export const useAuthStore = create<AuthState>()(
       // =====================
       // LOGOUT
       // =====================
-    logout: () => {
-  const token = getStoredAccessToken();
+      logout: () => {
+        const token = getStoredAccessToken();
 
-  // Stop refresh immediately
-  stopSilentRefreshInterval();
+        // Stop refresh immediately
+        stopSilentRefreshInterval();
 
-  // Clear state immediately
-  set({
-    token: null,
-    user: null,
-    isAuthenticated: false,
-    isLoading: false,
-  });
 
-  authVerificationCache = {
-    result: null,
-    timestamp: 0,
-    ttl: 30000,
-  };
+        if (socket) {
+          socket.disconnect();
+        }
 
-  if (typeof window !== "undefined") {
-    sessionStorage.clear();
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-  }
+        // Clear state immediately
+        set({
+          token: null,
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
 
-  // 🔥 Fire-and-forget backend logout
-  if (token) {
-    fetch(`${API_BASE}/api/admin/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
-  }
+        authVerificationCache = {
+          result: null,
+          timestamp: 0,
+          ttl: 30000,
+        };
 
-  console.log("Auth Store: Logged out");
-},
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
+          sessionStorage.removeItem("auth-storage");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+        }
+
+        // 🔥 Fire-and-forget backend logout
+        if (token) {
+          fetch(`${API_BASE}/api/admin/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => { });
+        }
+
+        console.log("Auth Store: Logged out");
+      },
 
       // =====================
       // CHECK AUTH (🔥 CORE FIX)
