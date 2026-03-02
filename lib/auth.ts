@@ -194,45 +194,42 @@ export const useAuthStore = create<AuthState>()(
       // =====================
       // LOGOUT
       // =====================
-      logout: async () => {
-        try {
-          const token = getStoredAccessToken();
+    logout: () => {
+  const token = getStoredAccessToken();
 
-          if (token) {
-            await fetch(`${API_BASE}/api/admin/logout`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          }
-        } catch (err) {
-          console.warn("Backend logout failed (continuing cleanup)");
-        }
+  // Stop refresh immediately
+  stopSilentRefreshInterval();
 
-        stopSilentRefreshInterval();
+  // Clear state immediately
+  set({
+    token: null,
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+  });
 
-        set({
-          token: null,
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
+  authVerificationCache = {
+    result: null,
+    timestamp: 0,
+    ttl: 30000,
+  };
 
-        authVerificationCache = {
-          result: null,
-          timestamp: 0,
-          ttl: 30000,
-        };
+  if (typeof window !== "undefined") {
+    sessionStorage.clear();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+  }
 
-        if (typeof window !== "undefined") {
-          sessionStorage.clear();
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-        }
+  // 🔥 Fire-and-forget backend logout
+  if (token) {
+    fetch(`${API_BASE}/api/admin/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {});
+  }
 
-        console.log("Auth Store: Logged out");
-      },
+  console.log("Auth Store: Logged out");
+},
 
       // =====================
       // CHECK AUTH (🔥 CORE FIX)
