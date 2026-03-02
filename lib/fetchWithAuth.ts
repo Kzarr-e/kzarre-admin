@@ -33,6 +33,9 @@ export const fetchWithAuth = async (
 
   // 🔥 If access token expired → refresh then retry
   if (response.status === 401 && refreshToken) {
+    console.warn(
+      "[fetchWithAuth] 401 received – attempting refresh with /api/admin/refresh"
+    );
     const refreshRes = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
       {
@@ -44,6 +47,11 @@ export const fetchWithAuth = async (
     );
 
     if (!refreshRes.ok) {
+      console.error(
+        "[fetchWithAuth] Refresh failed with status",
+        refreshRes.status,
+        "– clearing tokens and redirecting to /admin-login"
+      );
       sessionStorage.clear();
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
@@ -53,7 +61,14 @@ export const fetchWithAuth = async (
 
     const data = await refreshRes.json();
     const newAccess = data?.accessToken;
-    if (newAccess) setStoredAccessToken(newAccess);
+    if (newAccess) {
+      setStoredAccessToken(newAccess);
+      console.log("[fetchWithAuth] Access token refreshed via /api/admin/refresh");
+    } else {
+      console.warn(
+        "[fetchWithAuth] Refresh response had no accessToken – reusing old access token"
+      );
+    }
 
     response = await makeRequest(newAccess || accessToken);
   }

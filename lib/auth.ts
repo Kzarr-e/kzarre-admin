@@ -63,20 +63,35 @@ export function restoreTokensFromLocalStorage(): void {
 async function refreshAccessTokenSilent(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const refreshToken = getStoredRefreshToken();
-  if (!refreshToken) return false;
+  if (!refreshToken) {
+    console.log("[Auth] Silent refresh skipped – no refresh token");
+    return false;
+  }
+  console.log("[Auth] Silent refresh: calling /api/admin/refresh");
   try {
     const res = await fetch(`${API_BASE}/api/admin/refresh`, {
       method: "POST",
       headers: { Authorization: `Bearer ${refreshToken}` },
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.warn(
+        "[Auth] Silent refresh failed with status",
+        res.status
+      );
+      return false;
+    }
     const data = await res.json();
     const newAccessToken = data?.accessToken;
-    if (!newAccessToken) return false;
+    if (!newAccessToken) {
+      console.warn("[Auth] Silent refresh: no accessToken in response");
+      return false;
+    }
     setStoredAccessToken(newAccessToken);
     useAuthStore.setState({ token: newAccessToken });
+    console.log("[Auth] Silent refresh succeeded – access token updated");
     return true;
-  } catch {
+  } catch (err) {
+    console.error("[Auth] Silent refresh error", err);
     return false;
   }
 }
@@ -88,8 +103,16 @@ export function startSilentRefreshInterval(): void {
   }
   if (typeof window === "undefined") return;
   restoreTokensFromLocalStorage();
-  if (!getStoredRefreshToken()) return;
+  if (!getStoredRefreshToken()) {
+    console.log("[Auth] Not starting silent refresh – no refresh token");
+    return;
+  }
   refreshIntervalId = setInterval(refreshAccessTokenSilent, SILENT_REFRESH_INTERVAL_MS);
+  console.log(
+    "[Auth] Silent refresh interval started – every",
+    SILENT_REFRESH_INTERVAL_MS / 60000,
+    "minutes"
+  );
 }
 
 export function stopSilentRefreshInterval(): void {

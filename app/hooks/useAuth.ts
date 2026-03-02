@@ -24,19 +24,31 @@ export default function useAuth() {
   const refreshAccessToken = useCallback(async () => {
     try {
       const refreshToken = getStoredRefreshToken();
-      if (!refreshToken) return null;
+      if (!refreshToken) {
+        console.log("[useAuth] No refresh token – skipping refresh");
+        return null;
+      }
+
+      console.log("[useAuth] Refreshing access token via /api/admin/refresh");
 
       const res = await fetch(`${API}/api/admin/refresh`, {
         method: "POST",
         headers: { Authorization: `Bearer ${refreshToken}` },
       });
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.warn(
+          "[useAuth] /api/admin/refresh failed with status",
+          res.status
+        );
+        return null;
+      }
 
       const data = await res.json();
       if (data?.accessToken) {
         setStoredAccessToken(data.accessToken);
         setAccessToken(data.accessToken);
+        console.log("[useAuth] Access token refreshed successfully");
         return data.accessToken;
       }
 
@@ -48,7 +60,12 @@ export default function useAuth() {
 
   useEffect(() => {
     const storedAccess = getStoredAccessToken();
-    if (storedAccess) setAccessToken(storedAccess);
+    if (storedAccess) {
+      console.log("[useAuth] Loaded existing access token from storage");
+      setAccessToken(storedAccess);
+    } else {
+      console.log("[useAuth] No existing access token found in storage");
+    }
     refreshAccessToken().finally(() => setLoading(false));
   }, [refreshAccessToken]);
 

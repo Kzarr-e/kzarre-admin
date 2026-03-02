@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useAuthStore } from "@/lib/auth";
+import { PERMISSION_ROUTES } from "./permissions";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -76,16 +77,34 @@ export default function ProtectedRoute({
       // STEP 2: PERMISSION CHECK
       // ============================
       if (permissions.length > 0) {
+        console.log("🔐 Required permissions:", permissions);
+        console.log("👤 User role:", user?.role);
+        console.log("📦 User permissions:", user?.permissions);
+
+        const userPermissions = user?.permissions || [];
+        if (userPermissions.includes("*")) {
+          setAuthorized(true);
+          checkingRef.current = false;
+          return;
+        }
+
         const allowed = permissions.some((permission) =>
-          hasPermission(permission)
+          userPermissions.includes(permission)
         );
 
         if (!allowed) {
-          console.log(
-            "ProtectedRoute: Permission check failed for role:",
-            user?.role
-          );
-          router.replace("/unauthorized");
+          console.log("❌ Permission denied. Finding alternative route...");
+
+          const fallbackRoute = userPermissions
+            .map((perm: string) => PERMISSION_ROUTES[perm])
+            .find(Boolean);
+
+          if (fallbackRoute) {
+            router.replace(fallbackRoute);
+          } else {
+            router.replace("/unauthorized");
+          }
+
           setAuthorized(false);
           checkingRef.current = false;
           return;
@@ -125,7 +144,7 @@ export default function ProtectedRoute({
     isLoading,
     isAuthenticated,
     hasCheckedAuth,
-    user?._id, // re-run only when user really changes
+    user, // re-run only when user really changes
   ]);
 
   // ⏳ LOADING STATE
