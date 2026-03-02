@@ -53,16 +53,23 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
     });
 
     // 🚨 FORCE LOGOUT LISTENER
-    socket.on("force_logout", (data) => {
-      console.log("🚨 Force logout received");
+  socket.on("force_logout", (data) => {
+  console.log("🚨 Force logout received");
 
-      toast.error(data?.message || "Logged in from another device");
+  toast.error(data?.message || "Logged in from another device");
 
-      setTimeout(() => {
-        logout();
-        window.location.replace("/");
-      }, 1500);   // give toast time to show
-    });
+  setTimeout(() => {
+    // 🔥 CLEAR SESSION STORAGE (NOT localStorage)
+    sessionStorage.clear();
+
+    // stop auto reconnect
+    socket.io.opts.reconnection = false;
+
+    socket.disconnect();
+
+    window.location.replace("/");
+  }, 1500);
+});
     return () => {
       socket.off("notification");
       socket.off("force_logout");
