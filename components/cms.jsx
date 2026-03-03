@@ -19,7 +19,7 @@ import {
   ChevronDown,
   ArrowLeft,
 } from "lucide-react";
-
+import { socket } from "@/app/lib/socket";
 import toast from "react-hot-toast";
 import {
   DndContext,
@@ -97,6 +97,7 @@ export default function CMSComplete() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadCompleteToastShown = useRef(false);
+  const [selectedPosts, setSelectedPosts] = useState([]);
 
   const redirectTriggered = useRef(false);
   const sensors = useSensors(
@@ -127,8 +128,6 @@ export default function CMSComplete() {
     setImageShareLinks(arrayMove(imageShareLinks, oldIndex, newIndex));
   };
 
-
-
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -152,8 +151,80 @@ export default function CMSComplete() {
   };
 
 
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedPosts(postsData.map((post) => post._id));
+    } else {
+      setSelectedPosts([]);
+    }
+  };
+  const handleSelectPost = (postId, checked) => {
+    if (checked) {
+      setSelectedPosts((prev) => [...prev, postId]);
+    } else {
+      setSelectedPosts((prev) =>
+        prev.filter((id) => id !== postId)
+      );
+    }
+  };
 
 
+  const handleBulkDelete = async () => {
+    if (!selectedPosts.length) return;
+
+    const confirmDelete = confirm(
+      `Delete ${selectedPosts.length} selected posts permanently?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = getAuthToken();
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/bulk-delete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: selectedPosts }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+
+      setPostsData((prev) =>
+        prev.filter((p) => !selectedPosts.includes(p._id))
+      );
+
+      setSelectedPosts([]);
+      toast.success(data.message);
+
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  useEffect(() => {
+    socket.on("cms_bulk_deleted", (data) => {
+      const deletedIds = data.ids;
+
+      setPostsData((prev) =>
+        prev.filter((post) => !deletedIds.includes(post._id))
+      );
+
+      setSelectedPosts([]);
+      toast.success("Posts deleted by Super Admin");
+    });
+
+    return () => {
+      socket.off("cms_bulk_deleted");
+    };
+  }, []);
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("auth-storage");
@@ -520,7 +591,6 @@ export default function CMSComplete() {
     }
   };
 
-
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -815,8 +885,6 @@ export default function CMSComplete() {
 
     }
   };
-
-
   // =============================
   // SAVE DRAFT
   // =============================
@@ -831,7 +899,6 @@ export default function CMSComplete() {
     setPostsData([newPost, ...postsData]);
     setCurrentView("dashboard");
   };
-
   // =============================
   // APPROVE / REJECT / DELETE
   // =============================
@@ -918,8 +985,6 @@ export default function CMSComplete() {
     return new Date(post.visibleAt) <= new Date();
   };
 
-
-
   const getStatusColor = (status, post) => {
     // 🔴 LIVE overrides Scheduled
     if (status === "Scheduled" && isLiveNow(post)) {
@@ -936,7 +1001,6 @@ export default function CMSComplete() {
 
     return map[status] || "bg-gray-500 text-white";
   };
-
 
   // ---------- UI helpers ----------
   const TopBar = ({ back, title, children }) => (
@@ -1968,7 +2032,20 @@ export default function CMSComplete() {
 
           </div>
 
+
           <div className="flex gap-3 w-full sm:w-auto">
+            {selectedPosts.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2"
+                style={{
+                  backgroundColor: "rgba(255, 0, 0, 0.1)",
+                  color: "rgb(239,68,68)",
+                }}
+              >
+                Delete Selected ({selectedPosts.length})
+              </button>
+            )}
             {activeTab === "pagesAndPosts" && (
               <button
                 onClick={() => setCurrentView("createPost")}
@@ -1987,7 +2064,17 @@ export default function CMSComplete() {
           <div className="bg-[var(--background-card)] rounded-xl shadow-sm overflow-hidden border border-[var(--sidebar-border)]">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
+                {/* <thead>
+                  <th className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedPosts.length === postsData.length &&
+                        postsData.length > 0
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </th>
                   <tr className="border-b border-[var(--sidebar-border)] bg-[var(--background)]">
                     {[
                       "Title",
@@ -2005,14 +2092,53 @@ export default function CMSComplete() {
                       </th>
                     ))}
                   </tr>
-                </thead>
+                </thead> */}
+                <thead>
+                  <tr className="border-b border-[var(--sidebar-border)] bg-[var(--background)]">
+                    {/* Select All Checkbox */}
+                    <th className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={
+                          postsData.length > 0 &&
+                          selectedPosts.length === postsData.length
+                        }
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                    </th>
 
+                    {[
+                      "Title",
+                      "Type",
+                      "Author",
+                      "Last Modified",
+                      "Status",
+                      "Actions",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-left text-sm font-semibold text-[var(--text-primary)]"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>
                   {postsData.map((post) => (
                     <tr
                       key={post._id}
                       className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background-card)] transition-colors"
                     >
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedPosts.includes(post._id)}
+                          onChange={(e) =>
+                            handleSelectPost(post._id, e.target.checked)
+                          }
+                        />
+                      </td>
                       <td className="px-6 py-4 text-sm font-medium text-[var(--text-primary)]">
                         {post.title}
                       </td>
