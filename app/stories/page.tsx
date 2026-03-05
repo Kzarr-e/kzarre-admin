@@ -40,6 +40,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
 import UnderlineExtension from "@tiptap/extension-underline";
+import toast from "react-hot-toast";
 
 const GmailShortcuts = Extension.create({
   addKeyboardShortcuts() {
@@ -281,9 +282,9 @@ const [previewStory, setPreviewStory] = useState<Story | null>(null);
 
   /* ================= SUBMIT ================= */
   const submit = async () => {
-    if (!title || !content) return alert("Title & content required");
+    if (!title || !content) return toast.error("Title & content required");
     if (!editingStory && !coverImage)
-      return alert("Cover image required");
+      return toast.error("Cover image required");
 
     setLoading(true);
 
@@ -344,7 +345,7 @@ const [previewStory, setPreviewStory] = useState<Story | null>(null);
       // 🔥 Refresh list after delete
       fetchStories();
     } catch (err: any) {
-      alert("❌ " + err.message);
+      toast.error("❌ " + err.message);
     }
   };
 

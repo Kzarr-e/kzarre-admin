@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Rnd } from "react-rnd";
-
+import toast from "react-hot-toast";
 /* ================= TYPES ================= */
 
 type BlockType = "text" | "image" | "button";
@@ -285,7 +285,7 @@ ${whiteLabel ? "" : `<tr><td style="font-size:12px;color:#888;text-align:center;
   /* ================= SEND ================= */
 const saveNewsletter = async (status: "draft" | "send") => {
 if (!subject.trim()) {
-  alert("Email subject is required");
+  toast.error("Email subject is required");
   return null;
 }
 
@@ -306,7 +306,7 @@ if (!subject.trim()) {
   const data = await res.json();
 
   if (!res.ok) {
-    alert(data.message || "Failed to save newsletter");
+    toast.error(data.message || "Failed to save newsletter");
     return null;
   }
 
@@ -341,11 +341,11 @@ const sendCampaign = async (type: "test" | "send") => {
   const data = await res.json();
 
   if (!res.ok) {
-    alert(data.message || "Send failed");
+    toast.error(data.message || "Send failed");
     return;
   }
 
-  alert(type === "test" ? "Test email sent" : "Campaign sent");
+  toast.error(type === "test" ? "Test email sent" : "Campaign sent");
 };
 
 

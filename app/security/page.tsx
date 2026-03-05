@@ -10,7 +10,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
-
+import toast from "react-hot-toast";
 /* ================= TYPES ================= */
 
 type PageKey =
@@ -161,7 +161,7 @@ const getAuthHeaders = (): Record<string, string> => {
     });
 
     if (!res.ok) {
-      alert("Failed to save page");
+      toast.error("Failed to save page");
       setSaving(false);
       return;
     }
@@ -169,7 +169,7 @@ const getAuthHeaders = (): Record<string, string> => {
     const data = await res.json();
     setPageData(data.page);
 
-    alert("Page saved successfully");
+    toast.success("Page saved successfully");
     setSaving(false);
   };
 

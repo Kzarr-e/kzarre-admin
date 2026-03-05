@@ -13,6 +13,7 @@ import {
     FilterX
 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import toast from "react-hot-toast";
 /* =========================================================
    TYPES
 ========================================================= */
@@ -287,7 +288,7 @@ const disabledBtn =
             );
 
             if (!res.ok) {
-                alert("Failed to load order details");
+                toast.error("Failed to load order details");
                 setShowOrderDetails(false);
                 return;
             }
@@ -542,7 +543,7 @@ const disabledBtn =
             fetchPromises();
             fetchCustomerList();
         } catch (err) {
-            alert("Failed to update status. Reverting.");
+            toast.error("Failed to update status. Reverting.");
             // rollback on failure
             fetchPromises();
         }
@@ -585,11 +586,11 @@ const disabledBtn =
     ========================================================= */
     const createPromise = async () => {
         if (!promiseForm.dueDate || !customer) {
-            alert("Select due date");
+            toast.error("Select due date");
             return;
         }
         if (!promiseForm.notes.trim()) {
-            alert("Notes are required. Please explain this promise.");
+            toast.error("Notes are required. Please explain this promise.");
             return;
         }
         await fetch(
@@ -631,7 +632,7 @@ const disabledBtn =
             return;
         }
 
-        alert("Refund allowed by policy.");
+        toast.error("Refund allowed by policy.");
         setGuardrailBlocked(false);
     };
 
@@ -1070,7 +1071,7 @@ const disabledBtn =
                                                             if (match) {
                                                                 fetchOrderDetails(match[0]);
                                                             } else {
-                                                                alert("Order ID not found in timeline item");
+                                                                toast.error("Order ID not found in timeline item");
                                                             }
                                                         }}
                                                         className="text-xs px-2 py-1 border rounded hover:bg-gray-100"

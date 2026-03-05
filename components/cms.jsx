@@ -209,6 +209,7 @@ export default function CMSComplete() {
     }
   };
 
+
   useEffect(() => {
     socket.on("cms_bulk_deleted", (data) => {
       const deletedIds = data.ids;
@@ -225,6 +226,28 @@ export default function CMSComplete() {
       socket.off("cms_bulk_deleted");
     };
   }, []);
+
+  useEffect(() => {
+
+    socket.on("cms_created", (data) => {
+
+      setPostsData(prev => {
+
+        const safePrev = Array.isArray(prev) ? prev : [];
+
+        const exists = safePrev.some(p => p._id === data._id);
+        if (exists) return safePrev;
+        fetchCMSPosts();
+        return [data, ...safePrev];
+
+      });
+
+    });
+
+    return () => socket.off("cms_created");
+
+  }, []);
+
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("auth-storage");
@@ -244,11 +267,8 @@ export default function CMSComplete() {
     }
   }, []);
 
-
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-
-
   // =============================
   // POST FORM STATES
   // =============================
@@ -336,79 +356,88 @@ export default function CMSComplete() {
   // =============================
   // FETCH CMS CONTENT (DARK-MODE READY)
   // =============================
-  useEffect(() => {
-    const fetchCMSPosts = async () => {
-      try {
-        console.log("🚀 Fetching CMS posts...");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content`
-        );
-        console.log("Response status:", res.status);
-        const data = await res.json();
-        console.log("CMS DATA:", data);
-        if (Array.isArray(data)) {
-          const formatted = data.map((item) => ({
-            _id: item._id,
-            title:
-              item.title || (item.heroVideoUrl ? "Hero Video" : "CMS Item"),
-            type: item.displayTo || (item.heroVideoUrl ? "Video" : "Banner"),
-            author: item.author || "System",
-            status: item.status || "Pending Review",
-            visibleAt: item.visibleAt,
-            lastModified: item.updatedAt
-              ? new Date(item.updatedAt).toLocaleDateString()
-              : "—",
-            url: item.heroVideoUrl || item?.banners?.[0]?.imageUrl || "",
-          }));
-          setPostsData(formatted);
-        }
-      } catch (err) {
-        console.error("Failed to load CMS content:", err);
+  const fetchCMSPosts = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content`
+      );
+
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        setPostsData([]);
+        return;
       }
 
-    };
+      const formatted = data.map((item) => ({
+        _id: item._id,
+        title: item.title || "CMS Item",
+        type: item.displayTo,
+        author: item.author || "System",
+        status: item.status || "Pending Review",
+        visibleAt: item.visibleAt,
+        lastModified: item.updatedAt
+          ? new Date(item.updatedAt).toLocaleDateString()
+          : "—",
+        url:
+          item.heroVideoUrl ||
+          item?.media?.url ||
+          item?.mediaGroup?.[0]?.imageUrl ||
+          ""
+      }));
 
+      setPostsData(formatted);
+
+    } catch (err) {
+      console.error("CMS fetch error:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchCMSPosts();
   }, []);
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      setPostsData(prev => {
-        prev.forEach(async (post) => {
-          if (
-            post.status === "Uploading" ||
-            post.status === "Processing"
-          ) {
-            try {
-              const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
-              );
 
-              if (!res.ok) return;
+      for (const post of (postsData || [])) {
 
-              const data = await res.json();
+        if (
+          post.status === "Uploading" ||
+          post.status === "Processing"
+        ) {
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
+            );
 
-              setPostsData(current =>
-                current.map(p =>
-                  p._id === post._id
-                    ? {
-                      ...p,
-                      status: data.status,
-                      uploadProgress: data.progress ?? p.uploadProgress,
-                    }
-                    : p
-                )
-              );
-            } catch { }
+            if (!res.ok) continue;
+
+            const data = await res.json();
+
+            setPostsData(prev =>
+              prev.map(p =>
+                p._id === post._id
+                  ? {
+                    ...p,
+                    status: data.status,
+                    uploadProgress: data.progress ?? p.uploadProgress,
+                  }
+                  : p
+              )
+            );
+
+          } catch (err) {
+            console.error("Status poll error", err);
           }
-        });
+        }
 
-        return prev;
-      });
+      }
+
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [postsData]);
   // =============================
   // DRAG & DROP HANDLERS
   // =============================
@@ -450,7 +479,7 @@ export default function CMSComplete() {
     =============================== */
     if (postData.displayTo === "home-landing-video") {
       const video = files.find((f) => f.type.startsWith("video/"));
-      if (!video) return alert("Please upload a video.");
+      if (!video) return toast.error("Please upload a video.");
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -472,7 +501,7 @@ export default function CMSComplete() {
     =============================== */
     if (["bannerOne", "bannerTwo", "post"].includes(postData.displayTo)) {
       const image = files.find((f) => f.type.startsWith("image/"));
-      if (!image) return alert("Please upload an image.");
+      if (!image) return toast.error("Please upload an image.");
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -534,10 +563,10 @@ export default function CMSComplete() {
     =============================== */
     if (isGrid || isCarousel) {
       const imageFiles = files.filter((f) => f.type.startsWith("image/"));
-      if (!imageFiles.length) return alert("Please upload images.");
+      if (!imageFiles.length) return toast.error("Please upload images.");
 
       if (isGrid && imageFiles.length !== expectedGridCount) {
-        return alert(`Exactly ${expectedGridCount} images required.`);
+        return toast.error(`Exactly ${expectedGridCount} images required.`);
       }
 
       Promise.all(
@@ -602,6 +631,43 @@ export default function CMSComplete() {
     setUploadedMediaList([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+  const [mediaLibraryItems, setMediaLibraryItems] = useState([]);
+  const [selectedLibraryMedia, setSelectedLibraryMedia] = useState(null);
+
+  useEffect(() => {
+
+    if (!mediaLibraryOpen) return;
+
+    const fetchMedia = async () => {
+      try {
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/media/library`
+        );
+
+        const data = await res.json();
+
+        console.log("MEDIA LIBRARY RESPONSE:", data);
+
+        // ensure array
+        if (Array.isArray(data)) {
+          setMediaLibraryItems(data);
+        } else if (Array.isArray(data.files)) {
+          setMediaLibraryItems(data.files);
+        } else {
+          setMediaLibraryItems([]);
+        }
+
+      } catch (err) {
+        console.error("Media library fetch error:", err);
+        setMediaLibraryItems([]);
+      }
+    };
+
+    fetchMedia();
+
+  }, [mediaLibraryOpen]);
+
 
   const removeMediaAt = (index) => {
     const next = uploadedMediaList.filter((_, i) => i !== index);
@@ -622,39 +688,41 @@ export default function CMSComplete() {
     if (isSaving) return; // 🔒 Prevent duplicate clicks
     uploadCompleteToastShown.current = false;
     setIsSaving(true);
+
     // 🚀 Instantly add placeholder row
-    const tempId = `temp-${Date.now()}`;
-    const tempPost = {
-      _id: tempId,
-      title: postData.title,
-      type: postData.displayTo,
-      author: "You",
-      status: "Uploading",
-      uploadProgress: 0,
-      lastModified: new Date().toLocaleDateString(),
-    };
+    // const tempId = `temp-${Date.now()}`;
+    // const tempPost = {
+    //   _id: tempId,
+    //   title: postData.title,
+    //   type: postData.displayTo,
+    //   author: "You",
+    //   status: "Uploading",
+    //   uploadProgress: 0,
+    //   lastModified: new Date().toLocaleDateString(),
+    // };
 
-    setPostsData(prev => [tempPost, ...prev]);
-
+    // setPostsData(prev => [tempPost, ...prev]);
     // 🚀 Redirect immediately
     setCurrentView("dashboard");
     try {
       if (!postData.title.trim()) {
-        alert("Please enter a title.");
+        toast.error("Please enter a title.");
         setIsSaving(false);
         return;
       }
       // Validation for grids
       if (isGrid && uploadedMediaList.length !== expectedGridCount) {
-        alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
+        toast.error(`Please upload exactly ${expectedGridCount} images for this grid.`);
         return;
       }
       if (
         postData.displayTo === "home-landing-video" &&
         !uploadedMedia?.rawFile &&
+        !uploadedMedia?.uploadedUrl &&
+        !uploadedMedia?.url &&
         !isEditing
       ) {
-        alert("Please upload a landing video.");
+        toast.error("Please upload a landing video.");
         return;
       }
       const formData = new FormData();
@@ -669,34 +737,6 @@ export default function CMSComplete() {
       // -----------------------------
       // ✅ ABOUT PAGE DATA (UPDATED & CORRECT)
       // -----------------------------
-      if (postData.displayTo === "about-page") {
-        const aboutData = {
-          // ⚠️ This is ONLY for edit-mode reference
-          // Actual video URL is generated by backend upload
-          heroVideo: uploadedMedia?.uploadedUrl || null,
-
-          content: {
-            quote: {
-              text: postData.aboutQuoteText || "",
-              highlight: postData.aboutQuoteHighlight || "",
-            },
-            intro: postData.aboutIntro || "",
-            body: postData.aboutBody || "",
-          },
-
-          // ✅ Grid text only (images come from uploaded files)
-          grid: uploadedMediaList.map((m, idx) => ({
-            text: imageDescriptions[idx] || "",
-          })),
-
-          footer: {
-            heading: postData.aboutFooterHeading || "",
-            text: postData.aboutFooterText || "",
-          },
-        };
-
-        formData.append("aboutData", JSON.stringify(aboutData));
-      }
       // -----------------------------
       // MEDIA UPLOAD (FINAL & SAFE)
       // -----------------------------
@@ -705,25 +745,23 @@ export default function CMSComplete() {
       }
 
       // 1️⃣ ABOUT PAGE (video + images)
-      if (postData.displayTo === "about-page") {
-        // video
-        if (uploadedMedia?.rawFile) {
-          formData.append("file", uploadedMedia.rawFile);
-        }
-
-        // images
-        uploadedMediaList.forEach((m) => {
-          if (m.rawFile) {
-            formData.append("files", m.rawFile);
-          }
-        });
-      }
 
       // 2️⃣ NORMAL SINGLE MEDIA (image or video)
       else if (!isGrid && !isCarousel) {
+
+        // Uploading new file
         if (uploadedMedia?.rawFile) {
           formData.append("file", uploadedMedia.rawFile);
         }
+
+        // Selecting from media library (S3)
+        if (uploadedMedia?.uploadedUrl || uploadedMedia?.url) {
+          formData.append(
+            "existingFiles",
+            uploadedMedia.uploadedUrl || uploadedMedia.url
+          );
+        }
+
       }
 
       // 3️⃣ GRID / CAROUSEL
@@ -734,12 +772,9 @@ export default function CMSComplete() {
           } else {
             formData.append("existingFiles", m.uploadedUrl || m.url);
           }
-
           // ✅ Correct order
           formData.append("orders", String(index + 1));
         });
-
-
         formData.append("titles", JSON.stringify(imageTitles));
         formData.append("descriptions", JSON.stringify(imageDescriptions));
         formData.append("metaTags", JSON.stringify(imageMetaTags));
@@ -747,8 +782,6 @@ export default function CMSComplete() {
         formData.append("imageKeywords", JSON.stringify(imageKeywords));
         formData.append("shareLinks", JSON.stringify(imageShareLinks));
       }
-
-
       // -----------------------------
       // SAVE / UPDATE
       // -----------------------------
@@ -778,16 +811,8 @@ export default function CMSComplete() {
           setUploadProgress(percent);
 
           // 🔥 Update dashboard row progress
-          setPostsData(prev =>
-            prev.map(p =>
-              p._id === tempId
-                ? { ...p, uploadProgress: percent }
-                : p
-            )
-          );
 
           // 🚀 Instant redirect when upload completes
-
         };
         xhr.onload = async () => {
           if (xhr.status === 401) {
@@ -826,28 +851,27 @@ export default function CMSComplete() {
 
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseData = JSON.parse(xhr.responseText);
-
+            fetchCMSPosts();
             setPostsData(prev => {
-              // 1️⃣ Remove ALL temp uploading rows
-              const filtered = prev.filter(p => !String(p._id).startsWith("temp-"));
+              const safePrev = Array.isArray(prev) ? prev : [];
 
-              // 2️⃣ Add the real backend post at top
-              const realPost = {
+              const newPost = {
                 _id: responseData._id,
                 title: responseData.title || postData.title,
                 type: responseData.displayTo || postData.displayTo,
                 author: responseData.author || "You",
                 status: responseData.status || "Pending Review",
-                uploadProgress: 100,
                 visibleAt: responseData.visibleAt,
+                uploadProgress: 100,
                 lastModified: new Date().toLocaleDateString(),
                 url:
                   responseData.heroVideoUrl ||
-                  responseData?.banners?.[0]?.imageUrl ||
-                  "",
+                  responseData?.media?.url ||
+                  responseData?.mediaGroup?.[0]?.imageUrl ||
+                  ""
               };
 
-              return [realPost, ...filtered];
+              return [newPost, ...safePrev];
             });
 
             resolve(responseData);
@@ -1532,8 +1556,9 @@ export default function CMSComplete() {
 
                       <div className="mt-3 text-sm text-[var(--text-secondary)]">
                         <p className="font-medium text-[var(--text-primary)]">
-                          {uploadedMedia?.name ||
-                            `${uploadedMediaList.length} images selected`}
+                          {uploadedMedia
+                            ? "1 media selected"
+                            : `${uploadedMediaList.length} images selected`}
                         </p>
                         {uploadedMedia && <p>{uploadedMedia.size}</p>}
                         <p className="text-xs text-[var(--text-secondary)]">
@@ -1973,15 +1998,32 @@ export default function CMSComplete() {
 
             <div className="p-6">
               <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div
-                    key={i}
-                    className="aspect-square rounded-lg overflow-hidden border border-[var(--sidebar-border)] bg-[var(--background)] cursor-pointer flex items-center justify-center"
-                    onClick={() => setMediaLibraryOpen(false)}
-                  >
-                    <Image size={32} className="text-[var(--text-secondary)]" />
-                  </div>
-                ))}
+                {Array.isArray(mediaLibraryItems) &&
+                  mediaLibraryItems.map((media, index) => (
+
+                    <div
+                      key={index}
+                      onClick={() => setSelectedLibraryMedia(media)}
+                      className={`aspect-square rounded-lg overflow-hidden border cursor-pointer 
+                      ${selectedLibraryMedia?.url === media.url
+                          ? "border-green-500"
+                          : "border-[var(--sidebar-border)]"
+                        }`}
+                    >
+                      {media.url.endsWith(".mp4") ? (
+                        <video
+                          src={media.url}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                      ) : (
+                        <img
+                          src={media.url}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -1993,8 +2035,53 @@ export default function CMSComplete() {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-sm rounded-lg"
-                style={{ backgroundColor: "var(--accent-green)" }}
+                onClick={() => {
+
+                  if (!selectedLibraryMedia) return;
+
+                  const isVideo = /\.(mp4|webm|mov)$/i.test(selectedLibraryMedia.url);
+
+                  if (isGrid || isCarousel) {
+
+                    setUploadedMediaList(prev => {
+                      const next = [
+                        ...prev,
+                        {
+                          id: crypto.randomUUID(),
+                          url: selectedLibraryMedia.url,
+                          uploadedUrl: selectedLibraryMedia.url,
+                          rawFile: null,
+                          type: isVideo ? "video" : "image"
+                        }
+                      ];
+
+                      const count = next.length;
+
+                      setImageTitles(Array(count).fill(""));
+                      setImageDescriptions(Array(count).fill(""));
+                      setImageMetaTags(Array(count).fill(""));
+                      setImageMetaDescriptions(Array(count).fill(""));
+                      setImageKeywords(Array(count).fill(""));
+                      setImageShareLinks(Array(count).fill(""));
+
+                      return next;
+                    });
+
+                  } else {
+
+                    setUploadedMedia({
+                      url: selectedLibraryMedia.url,
+                      uploadedUrl: selectedLibraryMedia.url,
+                      rawFile: null,
+                      type: isVideo ? "video" : "image"
+                    });
+
+                  }
+
+                  setMediaLibraryOpen(false);
+                  setSelectedLibraryMedia(null);
+
+                }}
               >
                 Select
               </button>
@@ -2100,8 +2187,8 @@ export default function CMSComplete() {
                       <input
                         type="checkbox"
                         checked={
-                          postsData.length > 0 &&
-                          selectedPosts.length === postsData.length
+                          (postsData?.length || 0) > 0 &&
+                          selectedPosts.length === (postsData?.length || 0)
                         }
                         onChange={(e) => handleSelectAll(e.target.checked)}
                       />
@@ -2125,9 +2212,8 @@ export default function CMSComplete() {
                   </tr>
                 </thead>
                 <tbody>
-                  {postsData.map((post) => (
-                    <tr
-                      key={post._id}
+                  {(postsData || []).map((post) => (
+                   <tr key={post._id || Math.random()}
                       className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background-card)] transition-colors"
                     >
                       <td className="px-6 py-4">

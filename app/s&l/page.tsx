@@ -1,7 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import React, { useEffect, useState } from "react";
-
+import toast from "react-hot-toast";
 /* =========================
    AUTH TOKEN FROM COOKIE
 ========================= */
@@ -95,7 +95,7 @@ export default function ShippingAndLogisticsPage() {
   ========================= */
   const saveCourier = async () => {
     if (!form.name || !form.slug) {
-      alert("Courier name & slug required");
+      toast.error("Courier name & slug required");
       return;
     }
 

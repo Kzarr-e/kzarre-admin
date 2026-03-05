@@ -5,7 +5,9 @@ import { Plus, X, Shield } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { authApi } from "@/lib/auth";
+import toast from "react-hot-toast";
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 
 /* ===================================================
    DATA HOOKS
@@ -60,12 +62,12 @@ const deleteUser = async (user, refresh) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Delete failed");
 
-    alert("✅ User deleted successfully");
+    toast.success("✅ User deleted successfully");
     // refresh list
     refresh?.();
 
   } catch (err) {
-    alert("❌ " + err.message);
+    toast.error("❌ " + err.message);
   }
 };
 
@@ -92,11 +94,11 @@ const toggleUserStatus = async (user) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Status update failed");
 
-    alert(`✅ User ${newStatus ? "activated" : "deactivated"}`);
+    toast.success(`✅ User ${newStatus ? "activated" : "deactivated"}`);
     setRefreshKey(k => k + 1);
 
   } catch (err) {
-    alert("❌ " + err.message);
+    toast.error("❌ " + err.message);
   }
 };
 
@@ -131,7 +133,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     e.preventDefault();
 
     if (!form.roleId) {
-      alert("Please select a role");
+      toast.success("Please select a role");
       return;
     }
 
@@ -162,11 +164,11 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      alert("✅ User created successfully");
+      toast.success("✅ User created successfully");
       onUserAdded();
       onClose();
     } catch (err) {
-      alert("❌ " + err.message);
+      toast.error("❌ " + err.message);
     } finally {
       setLoading(false);
     }
@@ -188,8 +190,8 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
           </button>
         </div>
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+      
+        {/* <form onSubmit={handleSubmit} className="space-y-5">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
@@ -220,7 +222,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             }
           />
 
-          {/* ROLE SELECT */}
+       
           <select
             required
             className="input"
@@ -237,7 +239,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             ))}
           </select>
 
-          {/* PERMISSION PREVIEW (READ ONLY) */}
+         
           {selectedRole && (
             <div className="text-xs bg-black/5 p-3 rounded">
               <strong>Permissions:</strong>{" "}
@@ -245,7 +247,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             </div>
           )}
 
-          {/* ACTIONS */}
+    
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
@@ -262,7 +264,142 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
               {loading ? "Creating..." : "Create User"}
             </button>
           </div>
-        </form>
+        </form> */}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+  {/* NAME */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-gray-600">
+        First Name
+      </label>
+      <input
+        type="text"
+        placeholder="John"
+        required
+        autoComplete="given-name"
+        className="input px-4 py-2 border "
+        value={form.firstName || ""}
+        onChange={(e) =>
+          setForm((prev) => ({ ...prev, firstName: e.target.value }))
+        }
+      />
+    </div>
+
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-gray-600">
+        Last Name
+      </label>
+      <input
+        type="text"
+        placeholder="Doe"
+        required
+        autoComplete="family-name"
+        className="input px-4 py-2 border "
+        value={form.lastName || ""}
+        onChange={(e) =>
+          setForm((prev) => ({ ...prev, lastName: e.target.value }))
+        }
+      />
+    </div>
+
+  </div>
+
+  {/* EMAIL */}
+  <div className="flex flex-col gap-1">
+    <label className="text-sm font-medium text-gray-600">
+      Email Address
+    </label>
+    <input
+      type="email"
+      placeholder="john@example.com"
+      required
+      autoComplete="email"
+      className="input px-4 py-2 border"
+      value={form.email || ""}
+      onChange={(e) =>
+        setForm((prev) => ({ ...prev, email: e.target.value }))
+      }
+    />
+  </div>
+
+  {/* ROLE SELECT */}
+  <div className="flex flex-col gap-1">
+    <label className="text-sm font-medium text-gray-600">
+      Role
+    </label>
+
+    <select
+      required
+      className="input px-4 py-2  border"
+      value={form.roleId || ""}
+      onChange={(e) =>
+        setForm((prev) => ({ ...prev, roleId: e.target.value }))
+      }
+    >
+      <option value="">Select Role</option>
+
+      {roles.map((role) => (
+        <option key={role._id} value={role._id}>
+          {role.name}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* PERMISSION PREVIEW */}
+  {selectedRole && (
+    <div className="text-sm bg-gray-50 border border-gray-200 p-3 rounded-lg">
+
+      <div className="font-semibold text-gray-700 mb-1">
+        Role Permissions
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {selectedRole.permissions?.length ? (
+          selectedRole.permissions.map((perm) => (
+            <span
+              key={perm}
+              className="text-xs bg-gray-200 px-2 py-1 rounded"
+            >
+              {perm}
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-gray-400">
+            No permissions assigned
+          </span>
+        )}
+      </div>
+
+    </div>
+  )}
+
+  {/* ACTIONS */}
+  <div className="flex justify-end gap-3 pt-2">
+
+    <button
+      type="button"
+      onClick={onClose}
+      disabled={loading}
+      className="btn-secondary bg-black text-white px-4 py-2 text-sm  rounded-lg border-b"
+    >
+      Cancel
+    </button>
+
+    <button
+      type="submit"
+      disabled={loading}
+     className="px-4 py-2 text-sm bg-[var(--accent-green)] rounded-lg"
+    >
+      {loading ? "Creating User..." : "Create User"}
+    </button>
+
+  </div>
+
+</form>
       </div>
     </div>
   );
@@ -328,7 +465,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
 
         // If unauthorized, redirect to login
         if (error.message.includes("Authentication failed")) {
-          alert("Session expired. Please login again.");
+          toast("Session expired. Please login again.");
           window.location.href = "/admin/login";
         }
       });
@@ -362,7 +499,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
   }
 
   return (
-    <div className="bg-[var(--background-card)] border  rounded-2xl p-6">
+    <div className="bg-[var(--background-card)] border rounded-2xl p-6">
       <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-4">
         User List
       </h3>
@@ -528,7 +665,7 @@ const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
     );
 
   const create = async () => {
-    if (!name.trim()) return alert("Role name required");
+    if (!name.trim()) return toast("Role name required");
 
     try {
       setSaving(true);
@@ -551,7 +688,7 @@ const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
       onCreated?.();
       onClose();
     } catch (e) {
-      alert(e.message);
+      toast(e.message);
     } finally {
       setSaving(false);
     }
@@ -794,11 +931,11 @@ const EditRoleModal = ({ role, onClose, onUpdated }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      alert("✅ Role updated");
+      toast.success("✅ Role updated");
       onUpdated?.();
       onClose();
     } catch (e) {
-      alert("❌ " + e.message);
+      toast.error("❌ " + e.message);
     } finally {
       setSaving(false);
     }
@@ -861,7 +998,7 @@ const deleteRole = async (roleId) => {
   const token = sessionStorage.getItem("access_token");
 
   if (!token) {
-    alert("Session expired. Please login again.");
+    toast.error("Session expired. Please login again.");
     return;
   }
 
@@ -932,8 +1069,8 @@ export default function UserManagement() {
 
   return (
     <ProtectedRoute permissions={["manage_users"]}>
-      <div className="min-h-screen p-1 space-y-8">
-        <div className="mb-6">
+      <div className="min-h-screen p-1 space-y-1">
+        <div className="mb-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--textPrimary)]">
             User Management
           </h1>
@@ -1013,10 +1150,10 @@ export default function UserManagement() {
                 if (!confirm(`Delete role "${role.name}"?`)) return;
                 try {
                   await deleteRole(role._id);
-                  alert("✅ Role deleted");
+                  toast.success("✅ Role deleted");
                   setRefreshKey((k) => k + 1);
                 } catch (e) {
-                  alert("❌ " + e.message);
+                  toast.error("❌ " + e.message);
                 }
               }}
 

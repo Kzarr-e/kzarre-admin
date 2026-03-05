@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   X,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 /* ================= TYPES ================= */
 interface Subscriber {
@@ -80,7 +81,7 @@ export default function MarketingCenter() {
   /* ================= SEND / SCHEDULE ================= */
   const submitCampaign = async () => {
     if (!subject || !body) {
-      alert("Subject and body are required");
+      toast.error("Subject and body are required");
       return;
     }
 
@@ -100,7 +101,7 @@ export default function MarketingCenter() {
     });
 
     if (!res.ok) {
-      alert("Failed to create campaign");
+      toast.error("Failed to create campaign");
       setSending(false);
       return;
     }
