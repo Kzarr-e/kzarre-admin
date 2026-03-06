@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import Script from "next/script";
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +22,10 @@ export default function Home() {
 };
 
   return (
+    <>  <Script
+  src="http://localhost:4000/tracker.js"
+  strategy="afterInteractive"
+/>
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E8F5E9] relative overflow-hidden">
       {/* Floating Background Elements */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-[#A0EDA8]/30 rounded-full blur-3xl animate-pulse" />
@@ -72,6 +76,8 @@ export default function Home() {
           </>
         )}
       </div>
+    
     </div>
+    </>
   );
 }

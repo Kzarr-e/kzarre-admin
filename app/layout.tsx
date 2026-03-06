@@ -4,6 +4,7 @@ import "./globals.css";
 import NotificationProvider from "@/components/NotificationProvider";
 import { Toaster } from "react-hot-toast";
 import SilentRefresh from "@/components/SilentRefresh";
+import Script from "next/script";
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
@@ -48,6 +49,7 @@ export default function RootLayout({
     
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
+        <script src="https://monitor.creonox.com/data/tracker.js"></script>
         <Toaster position="bottom-center" toastOptions={{
     duration: 4000,
     style: {
