@@ -46,31 +46,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    
+
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
-        <script src="https://monitor.creonox.com/data/tracker.js"></script>
+        <Script
+          src="https://monitor.creonox.com/data/tracker.js"
+          strategy="afterInteractive"
+        />
         <Toaster position="bottom-center" toastOptions={{
-    duration: 4000,
-    style: {
-      borderRadius: "10px",
-      background: "#111",
-      color: "#fff",
-      padding: "12px 16px",
-    },
-    success: {
-      iconTheme: {
-        primary: "#22c55e",
-        secondary: "#fff",
-      },
-    },
-    error: {
-      iconTheme: {
-        primary: "#ef4444",
-        secondary: "#fff",
-      },
-    },
-  }}/>
+          duration: 4000,
+          style: {
+            borderRadius: "10px",
+            background: "#111",
+            color: "#fff",
+            padding: "12px 16px",
+          },
+          success: {
+            iconTheme: {
+              primary: "#22c55e",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }} />
         <SilentRefresh />
         <NotificationProvider onClose={undefined} />
         {children}

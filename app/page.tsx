@@ -23,7 +23,7 @@ export default function Home() {
 
   return (
     <>  <Script
-  src="http://localhost:4000/tracker.js"
+  src="https://monitor.creonox.com/data/tracker.js"
   strategy="afterInteractive"
 />
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E8F5E9] relative overflow-hidden">
