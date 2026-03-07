@@ -5,6 +5,7 @@ import { socket } from "@/app/lib/socket";
 import { X } from "lucide-react";
 import { useAuthStore } from "@/lib/auth";
 import toast from "react-hot-toast";
+import { useNotificationStore } from "@/lib/notificationStore";
 
 const AUTO_HIDE_MS = 3000;
 
@@ -24,7 +25,10 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
   useEffect(() => {
     const { logout } = useAuthStore.getState();
 
-    // 🔔 Notification listener
+    // ✅ prevent duplicate listeners
+    socket.off("notification");
+    socket.off("force_logout");
+
     socket.on("notification", (data) => {
       const item = {
         id: crypto.randomUUID(),
@@ -33,6 +37,10 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
         time: Date.now(),
         read: false,
       };
+
+      const { addNotification } = useNotificationStore.getState();
+
+      addNotification(item);
 
       setNotifications((prev) => {
         const updated = [item, ...prev];
@@ -46,30 +54,23 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
       }
 
       setTimeout(() => {
-        setNotifications((prev) =>
-          prev.filter((n) => n.id !== item.id)
-        );
+        setNotifications((prev) => prev.filter((n) => n.id !== item.id));
       }, AUTO_HIDE_MS);
     });
 
-    // 🚨 FORCE LOGOUT LISTENER
-  socket.on("force_logout", (data) => {
-  console.log("🚨 Force logout received");
+    socket.on("force_logout", (data) => {
+      console.log("🚨 Force logout received");
 
-  toast.error(data?.message || "Logged in from another device");
+      toast.error(data?.message || "Logged in from another device");
 
-  setTimeout(() => {
-    // 🔥 CLEAR SESSION STORAGE (NOT localStorage)
-    sessionStorage.clear();
+      setTimeout(() => {
+        sessionStorage.clear();
+        socket.io.opts.reconnection = false;
+        socket.disconnect();
+        window.location.replace("/");
+      }, 1500);
+    });
 
-    // stop auto reconnect
-    socket.io.opts.reconnection = false;
-
-    socket.disconnect();
-
-    window.location.replace("/");
-  }, 1500);
-});
     return () => {
       socket.off("notification");
       socket.off("force_logout");

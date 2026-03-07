@@ -165,7 +165,7 @@ export default function ProfilePage() {
 
       {/* HEADER */}
       <div className="flex items-center justify-between mb-9">
-        <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+        <h1 className="text-2xl text-[var(--textSecondary)] font-bold ">My Profile</h1>
 
         <button
           onClick={handleLogout}
@@ -176,7 +176,7 @@ export default function ProfilePage() {
       </div>
 
       {/* PROFILE CARD */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+      <div className="bg-[var(--background)] rounded-2xl shadow-sm p-6 border ">
         <h2 className="text-lg font-semibold mb-4">Account Details</h2>
 
         {loading ? (
@@ -195,7 +195,7 @@ export default function ProfilePage() {
       </div>
 
       {/* CHANGE PASSWORD */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200 mt-6">
+      <div className="bg-[var(--background)] rounded-2xl shadow-sm p-6 border  mt-6">
         <h2 className="text-lg font-semibold mb-4">Change Password</h2>
 
         <form
@@ -215,7 +215,7 @@ export default function ProfilePage() {
                   currentPassword: e.target.value,
                 })
               }
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 transition-all duration-300 pr-12"
+              className="w-full px-4 py-3 border rounded-xl bg-[var(--background)] focus:ring-2 focus:ring-green-500 transition-all duration-300 pr-12"
             />
             <button
               type="button"
@@ -238,7 +238,7 @@ export default function ProfilePage() {
                   newPassword: e.target.value,
                 })
               }
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 transition-all duration-300 pr-12"
+              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 bg-[var(--background)] transition-all duration-300 pr-12"
             />
             <button
               type="button"
@@ -283,7 +283,7 @@ export default function ProfilePage() {
                   confirmPassword: e.target.value,
                 })
               }
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 transition-all duration-300 pr-12"
+              className="w-full px-4 py-3 border rounded-xl bg-[var(--background)] focus:ring-2 focus:ring-green-500 transition-all duration-300 pr-12"
             />
             <button
               type="button"
@@ -315,7 +315,7 @@ export default function ProfilePage() {
               strengthScore < 3 ||
               !passwordsMatch
             }
-            className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-xl font-semibold text-[var(--textSecondary)] bg-gradient-to-r from-green-500 to-green-600 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {passwordLoading ? "Updating..." : "Update Password"}
           </button>
@@ -329,8 +329,8 @@ export default function ProfilePage() {
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <label className="text-sm text-gray-500">{label}</label>
-      <p className="mt-1 text-gray-800 font-medium">{value}</p>
+      <label className="text-sm text-[var(--textSecondary)]">{label}</label>
+      <p className="mt-1 text-[var(--textSecondary)] font-medium">{value}</p>
     </div>
   );
 }

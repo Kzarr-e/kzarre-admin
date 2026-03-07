@@ -1452,7 +1452,7 @@ const ECommerceSection: React.FC = () => {
       </div>
 
       {/* Product List */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
@@ -1513,7 +1513,7 @@ const ECommerceSection: React.FC = () => {
                 <tr>
                   <td colSpan={8} className="text-center py-6 text-gray-500">
                     <RotateCcw
-                      className="inline-block animate-spin mr-2"
+                      className="inline-block animate-spin mr-5"
                       size={18}
                     />{" "}
                     Loading products...
@@ -3066,128 +3066,126 @@ const ECommerceSection: React.FC = () => {
 
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-xl w-full max-w-3xl p-6 relative max-h-[90vh] overflow-auto">
-          {/* Close Button */}
+
+        {/* Modal */}
+        <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto 
+  bg-white dark:bg-[var(--background)]
+  rounded-xl shadow-2xl p-6">
+
+          {/* Close */}
           <button
-            className="absolute top-3 right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full"
             onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center 
+      rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-red-600 transition"
           >
             ✕
           </button>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold text-[var(--textPrimary)] mb-4">
-            Order Details — {order.orderId}
-          </h2>
+          <div className="border-b pb-4 mb-6">
+            <h2 className="text-xl font-bold text-[var(--textPrimary)]">
+              Order Details
+            </h2>
+            <p className="text-sm text-[var(--textSecondary)]">
+              Order ID: {order.orderId}
+            </p>
+          </div>
 
           {/* Customer Info */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+            <h3 className="text-lg font-semibold mb-3 text-[var(--textPrimary)]">
               Customer Information
             </h3>
-            <p className="text-[var(--textSecondary)] text-sm mt-2">
-              <strong>Name:</strong> {order.address?.name || "—"} <br />
-              <strong>Phone:</strong> {order.address?.phone || "—"} <br />
-              <strong>City:</strong> {order.address?.city || "—"} <br />
-              <strong>State:</strong> {order.address?.state || "—"} <br />
-              <strong>Address:</strong> {order.address?.line1 || "—"}
-            </p>
+
+            <div className="grid grid-cols-2 gap-4 text-sm text-[var(--textSecondary)]">
+              <div><strong>Name:</strong> {order.address?.name || "—"}</div>
+              <div><strong>Phone:</strong> {order.address?.phone || "—"}</div>
+              <div><strong>City:</strong> {order.address?.city || "—"}</div>
+              <div><strong>State:</strong> {order.address?.state || "—"}</div>
+              <div className="col-span-2">
+                <strong>Address:</strong> {order.address?.line1 || "—"}
+              </div>
+            </div>
           </div>
 
           {/* Ordered Items */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">
+            <h3 className="text-lg font-semibold mb-3 text-[var(--textPrimary)]">
               Ordered Items
             </h3>
 
-            {order.items?.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex gap-4 p-3 border  rounded-lg mb-3"
-              >
-                {/* Product Image */}
-                <img
-                  src={item.image || "/no-image.png"}
-                  alt=""
-                  className="w-20 h-20 rounded object-cover border"
-                />
+            <div className="space-y-3">
+              {order.items?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex gap-4 p-3 border rounded-lg  "
+                >
+                  {/* Image */}
+                  <img
+                    src={item.image || "/no-image.png"}
+                    alt=""
+                    className="w-40 h-40 object-cover rounded border"
+                  />
 
-                <div>
-                  <p className="font-medium text-[var(--textPrimary)]">
-                    {item.name}
-                  </p>
-                  <p className="text-[var(--textSecondary)] text-sm">
-                    Qty: {item.qty}
-                  </p>
-                  <p className="text-[var(--textSecondary)] text-sm">
-                    Size: {item.size || "—"}
-                  </p>
-                  <p className="text-[var(--textSecondary)] text-sm">
-                    Color: {item.color || "—"}
-                  </p>
-                  <p className="font-semibold text-[var(--textPrimary)] mt-1">
-                    ${item.price}
-                  </p>
+                  {/* Info */}
+                  <div className="flex flex-col text-sm">
+                    <p className="font-medium text-xl text-[var(--textPrimary)]">
+                      {item.name}
+                    </p>
+                    <br/>
+
+                    <p className="text-[var(--textSecondary)] ">
+                      Qty: {item.qty}
+                    </p>
+
+                    <p className="text-[var(--textSecondary)]">
+                      Size: {item.size || "—"} | Color: {item.color || "—"}
+                    </p>
+
+                    <p className="font-semibold text-[var(--textPrimary)] mt-1">
+                      ${item.price}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Order Summary */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+          <div>
+            <h3 className="text-lg font-semibold mb-3 text-[var(--textPrimary)]">
               Order Summary
             </h3>
-            <p className="text-sm text-[var(--textSecondary)] mt-2">
-              <strong>Total Amount:</strong> ${order.amount} <br />
-              <strong>Status:</strong>{" "}
-              <span
-                className={`px-2 py-1 rounded text-xs ${order.status === "paid"
-                  ? "bg-[var(--accent-green)]text-green-800"
-                  : order.status === "failed"
-                    ? "bg-red-200 text-red-800"
-                    : "bg-yellow-200 text-yellow-800"
-                  }`}
-              >
-                {order.status}
-              </span>
-              <br />
-              <strong>Placed On:</strong>{" "}
-              {order.createdAt
-                ? new Date(order.createdAt).toLocaleString()
-                : "—"}
-            </p>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center mt-6">
-            {/* LEFT BUTTONS */}
-            <div className="flex gap-3">
-              {/* UPDATE STATUS */}
-              <button
-                onClick={() => onStatusClick(order)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              >
-                Update Status
-              </button>
+            <div className="grid grid-cols-2 gap-4 text-sm text-[var(--textSecondary)]">
 
-              {/* PRINT LABEL */}
-              <button
-                onClick={() => onPrintClick(order)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
-              >
-                Print Shipping Label
-              </button>
+              <div>
+                <strong>Total Amount:</strong> ${order.amount}
+              </div>
+
+              <div>
+                <strong>Status:</strong>{" "}
+                <span
+                  className={`ml-2 px-2 py-1 rounded text-xs font-medium ${order.status === "paid"
+                    ? "bg-green-100 text-green-700"
+                    : order.status === "failed"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-yellow-100 text-yellow-700"
+                    }`}
+                >
+                  {order.status}
+                </span>
+              </div>
+
+              <div className="col-span-2">
+                <strong>Placed On:</strong>{" "}
+                {order.createdAt
+                  ? new Date(order.createdAt).toLocaleString()
+                  : "—"}
+              </div>
             </div>
-
-            {/* CLOSE */}
-            <button
-              onClick={onClose}
-              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-            >
-              Close
-            </button>
           </div>
+
         </div>
       </div>
     );
@@ -3204,7 +3202,7 @@ const ECommerceSection: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b  bg-[var(--background)] dark:bg-[var(--bgCard)]">
+            <tr className="border-b bg-[var(--background)] dark:bg-[var(--bgCard)]">
               <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
                 Order ID
               </th>
@@ -3282,78 +3280,22 @@ const ECommerceSection: React.FC = () => {
                 {/* ACTIONS DROPDOWN */}
                 <td className="px-6 py-4 relative">
                   <button
-                    onClick={() =>
-                      setOpenDropdown(
-                        openDropdown === order._id ? null : order._id
-                      )
-                    }
-                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                    onClick={() => {
+                      setModalOrder({
+                        orderId: order.orderId || order._id,
+                        amount: Number(order.amount || 0),
+                        status: order.status || "pending",
+                        createdAt: order.createdAt || new Date().toISOString(),
+                        items: order.items || [],
+                        address: order.address || {},
+                      });
+                      setShowOrderModal(true);
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <MoreVertical size={18} className="text-gray-500" />
+                    <FileText />
                   </button>
-
-                  {openDropdown === order._id && (
-                    <div className="absolute right-6 mt-2 w-48 bg-white dark:bg-[var(--bgCard)] border  rounded-lg shadow-lg z-50">
-                      {/* VIEW DETAILS */}
-                      <button
-                        onClick={() => {
-                          setModalOrder({
-                            orderId: order.orderId || order._id, // ✅ guaranteed string
-                            amount: Number(order.amount || 0),
-                            status: order.status || "pending",
-                            createdAt:
-                              order.createdAt || new Date().toISOString(),
-                            items: order.items || [],
-                            address: order.address || {},
-                          });
-                          setShowOrderModal(true);
-                          setOpenDropdown(null);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        View Details
-                      </button>
-
-                      {/* UPDATE STATUS */}
-                      <button
-                        onClick={() => {
-                          setStatusOrderId(order._id);
-
-                          setNewStatus(order.status || "pending");
-
-                          setShowStatusModal(true);
-                          setOpenDropdown(null);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        Update Status
-                      </button>
-
-                      {/* PRINT LABEL */}
-                      <button
-                        onClick={() => toast("Print Label Coming Soon")}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        Print Shipping Label
-                      </button>
-
-                      {/* INVOICE */}
-                      <button
-                        onClick={() => toast("Invoice Download Coming Soon")}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        Download Invoice
-                      </button>
-
-                      {/* CANCEL ORDER */}
-                      <button
-                        onClick={() => handleCancelOrder(order._id)}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                      >
-                        Cancel Order
-                      </button>
-                    </div>
-                  )}
                 </td>
               </tr>
             ))}

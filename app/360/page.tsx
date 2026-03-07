@@ -12,11 +12,8 @@ import {
     X,
     FilterX
 } from "lucide-react";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import toast from "react-hot-toast";
-/* =========================================================
-   TYPES
-========================================================= */
+
 type Customer = {
     fulfilledCount: number;
     breachedCount: number;
@@ -134,24 +131,17 @@ export default function MiniCRMPage() {
 
         return true;
     });
-  
-
-const filterCounts = {
-    all: customers.length,
-    pending: customers.filter(c => (c as any).pendingCount > 0).length,
-    breached: customers.filter(c => (c as any).breachedCount > 0).length,
-    fulfilled: customers.filter(c => (c as any).fulfilledCount > 0).length,
-};
-
-const isFilterDisabled = (key: string) =>
-    key !== "all" &&
-    filterCounts[key as keyof typeof filterCounts] === 0;
-
-const disabledBtn =
-    "opacity-50 cursor-not-allowed pointer-events-none";
-
-
-
+    const filterCounts = {
+        all: customers.length,
+        pending: customers.filter(c => (c as any).pendingCount > 0).length,
+        breached: customers.filter(c => (c as any).breachedCount > 0).length,
+        fulfilled: customers.filter(c => (c as any).fulfilledCount > 0).length,
+    };
+    const isFilterDisabled = (key: string) =>
+        key !== "all" &&
+        filterCounts[key as keyof typeof filterCounts] === 0;
+    const disabledBtn =
+        "opacity-50 cursor-not-allowed pointer-events-none";
     const [customerAddress, setCustomerAddress] = useState<any | null>(null);
     const [timeline, setTimeline] = useState<TimelineItem[]>([]);
     const [promises, setPromises] = useState<PromiseRecord[]>([]);
@@ -186,7 +176,6 @@ const disabledBtn =
 
         return `${year}-${month}-${day}`;   // 🔥 NO toISOString
     };
-
 
     const approveReturn = async (orderId: string) => {
         await fetch(
@@ -227,8 +216,6 @@ const disabledBtn =
         const data = await res.json();
         setReturns(data.returns || []);
     };
-
-
 
     useEffect(() => {
         fetchReturns();
@@ -304,14 +291,9 @@ const disabledBtn =
         }
     };
 
-
-
     const [activeIndex, setActiveIndex] = useState(0);
     const [recentCustomerId, setRecentCustomerId] = useState<string | null>(null);
 
-    /* =========================================================
-       FETCH CUSTOMER LIST
-    ========================================================= */
     useEffect(() => {
         fetchCustomerList();
     }, []);
@@ -345,10 +327,6 @@ const disabledBtn =
         }
     };
 
-
-    /* =========================================================
-       KEYBOARD NAVIGATION
-    ========================================================= */
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (!customers.length) return;
@@ -465,7 +443,6 @@ const disabledBtn =
         }
     };
 
-
     /* =========================================================
        FETCH DETAILS
     ========================================================= */
@@ -548,7 +525,6 @@ const disabledBtn =
             fetchPromises();
         }
     };
-
 
     const formatDate = (d: Date) => {
         const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -689,7 +665,6 @@ const disabledBtn =
                     }}
                     id="crm-search"
                 />
-
                 <button
                     onClick={() => {
                         const input = document.getElementById(
@@ -734,55 +709,54 @@ const disabledBtn =
                     Customers
                 </div>
 
-                 {!loadingCustomers && customers.length > 0 && (
-                            <div className="flex flex-wrap gap-2 px-4 py-2 border-b bg-gray-50 text-sm items-center">
+                {!loadingCustomers && customers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 px-4 py-2 border-b bg-[var(--background-card)] dark:bg-[var(--bgCard)]text-sm items-center">
 
-                                {[
-                                    { key: "all", label: "All Customers" },
-                                    { key: "pending", label: "Pending" },
-                                    { key: "breached", label: "Breached" },
-                                    { key: "fulfilled", label: "Fulfilled" },
-                                ].map((f) => {
-                                    const active = customerFilter === f.key;
-                                    const disabled = isFilterDisabled(f.key);
+                        {[
+                            { key: "all", label: "All Customers" },
+                            { key: "pending", label: "Pending" },
+                            { key: "breached", label: "Breached" },
+                            { key: "fulfilled", label: "Fulfilled" },
+                        ].map((f) => {
+                            const active = customerFilter === f.key;
+                            const disabled = isFilterDisabled(f.key);
 
-                                    return (
-                                        <button
-                                            key={f.key}
-                                            onClick={() => setCustomerFilter(f.key as CustomerFilter)}
-                                            disabled={disabled}
-                                            className={`
+                            return (
+                                <button
+                                    key={f.key}
+                                    onClick={() => setCustomerFilter(f.key as CustomerFilter)}
+                                    disabled={disabled}
+                                    className={` bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]
             px-3 py-1 rounded border transition
             ${active
-                                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                                    : "bg-white hover:bg-gray-100"
-                                                }
+                                            ? "bg-blue-100 text-blue-700 border-blue-300"
+                                            : "bg-white hover:bg-gray-100"
+                                        }
               ${disabled ? "opacity-40 cursor-not-allowed" : ""}
           `}
-                                        >
-                                            {f.label}
-                                        </button>
-                                    );
-                                })}
-
-                                {/* 🔥 CLEAR FILTER (always enabled) */}
-                                <button
-                                    onClick={clearCustomerFilter}
-                                    disabled={customerFilter === "all"}
-                                    className={`
+                                >
+                                    {f.label}
+                                </button>
+                            );
+                        })}
+                        {/* 🔥 CLEAR FILTER (always enabled) */}
+                        <button
+                            onClick={clearCustomerFilter}
+                            disabled={customerFilter === "all"}
+                            className={`bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]
         ml-2 p-2 rounded border transition
         ${customerFilter !== "all"
-                                            ? "text-gray-600 hover:bg-red-50 hover:text-red-600"
-                                            : "opacity-30 cursor-not-allowed"
-                                        }
+                                    ? "text-gray-600 hover:bg-red-50 hover:text-red-600"
+                                    : "opacity-30 cursor-not-allowed"
+                                }
       `}
-                                    title="Clear filter"
-                                >
-                                    <FilterX size={16} />
-                                </button>
+                            title="Clear filter"
+                        >
+                            <FilterX size={16} />
+                        </button>
 
-                            </div>
-                        )}
+                    </div>
+                )}
 
                 {loadingCustomers && customers.length > 0 && (
                     <div className="divide-y">
@@ -796,15 +770,13 @@ const disabledBtn =
                         ))}
                     </div>
                 )}
-
-
                 {loadingCustomers ? (
-    <div className="p-4 text-sm text-gray-500">Loading…</div>
-  ) : filteredCustomers.length === 0 ? (
-    <div className="p-4 text-sm text-gray-500">
-      No customers found.
-    </div>
-  ) : (
+                    <div className="p-4 text-sm  text-gray-500">Loading…</div>
+                ) : filteredCustomers.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500">
+                        No customers found.
+                    </div>
+                ) : (
                     <div className="overflow-x-auto max-h-[70vh]">
                         {/* DETAIL TABS */}
                         <div className="flex gap-2 border-b mb-4">
@@ -816,14 +788,9 @@ const disabledBtn =
                                 <button
                                     key={tab.key}
                                     onClick={() => setActiveTab(tab.key as any)}
-                                    className={`
-        px-4 py-2 text-sm border-b-2 transition
-        ${activeTab === tab.key
-                                            ? "border-blue-500 text-blue-600 font-medium"
-                                            : "border-transparent text-gray-500 hover:text-gray-700"
-                                        }
-      `}
-                                >
+                                    className={`px-4 py-2 text-sm border-b-2 transition ${activeTab === tab.key
+                                        ? "border-blue-500 text-blue-600 font-medium"
+                                        : "border-transparent text-gray-500 hover:text-gray-700"}`}>
                                     {tab.label}
                                     {tab.key === "messages" && contactMessages.length > 0 && (
                                         <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
@@ -834,7 +801,7 @@ const disabledBtn =
                             ))}
                         </div>
                         <table className="w-full text-sm">
-                            <thead className="bg-[var(--background-card)] border-b sticky top-0">
+                            <thead className="bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)] border-b sticky top-0">
                                 <tr>
                                     <th className="px-3 py-2 text-left">Name</th>
                                     <th className="px-3 py-2 text-left">Email</th>
@@ -848,31 +815,28 @@ const disabledBtn =
 
                             <tbody>
                                 {filteredCustomers.map((c, index) => (
-
                                     <tr
                                         key={c._id}
                                         onClick={() => selectCustomer(c)}
-                                        className={`
-                      cursor-pointer border-t transition
-                      hover:bg-black/5
-                      ${index === activeIndex
-                                                ? "bg-blue-50 ring-1 ring-blue-200"
+                                        className={`cursor-pointer border-t transition
+    ${index === activeIndex
+                                                ? "bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-800"
                                                 : ""
                                             }
-                      ${customer?._id === c._id
-                                                ? "bg-green-50 font-medium"
+    ${customer?._id === c._id
+                                                ? "bg-white dark:bg-[var(--bgCard)] font-semibold"
                                                 : ""
                                             }
-                      ${recentCustomerId === c._id
-                                                ? "bg-yellow-50 animate-pulse"
+    ${recentCustomerId === c._id
+                                                ? "bg-yellow-50 dark:bg-yellow-900/30 animate-pulse"
                                                 : ""
                                             }
-                    `}
+  `}
                                     >
-                                        <td className="px-3 py-2">{c.name}</td>
+                                        <td className="px-3 py-2 ">{c.name}</td>
                                         <td className="px-3 py-2">{c.email}</td>
                                         <td className="px-3 py-2">{c.phone || "—"}</td>
-                                        <td className="px-3 py-2">
+                                        <td className="px-3 py-2 ">
                                             {(() => {
                                                 let displayStatus = c.lastPromiseStatus;
 
@@ -943,16 +907,16 @@ const disabledBtn =
 
             {/* ================= RIGHT SIDE OVERLAY DETAILS ================= */}
             {showDetails && customer && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-                    <div className="w-full max-w-4xl h-[90vh] bg-white shadow-xl rounded-xl overflow-y-auto">
+                <div className="fixed inset-0 bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]  bg-black/40 z-50 flex items-center justify-center">
+                    <div className="w-full max-w-4xl h-[90vh] bg-[var(--background-card)] shadow-xl rounded-xl overflow-y-auto">
 
 
                         {/* Overlay Header */}
-                        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
+                        <div className="sticky top-0 bg-[var(--background-card)] border-b p-4 flex items-center justify-between z-10">
                             <div className="font-semibold text-lg">{customer.name}</div>
                             <button
                                 onClick={() => setShowDetails(false)}
-                                className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
+                                className="px-3 py-1 border rounded text-sm hover:bg-red-600"
                             >
                                 Close
                             </button>
@@ -1110,15 +1074,15 @@ const disabledBtn =
                                 </div>
 
                                 {showPromiseForm && (
-                                    <div className="border p-4 rounded space-y-4 bg-gray-50">
+                                    <div className="border p-4 rounded space-y-4 bg-[var(--background-card)] dark:bg-[var(--bgCard)]">
 
                                         {/* Promise Type */}
-                                        <div className="flex flex-col gap-1">
+                                        <div className="flex flex-col gap-1 bg-[var(--background-card)]">
                                             <label className="text-xs font-medium text-gray-600">
                                                 Promise Type
                                             </label>
                                             <select
-                                                className="w-full border p-2 rounded bg-white"
+                                                className="w-full border p-2 rounded dark:bg-[var(--bgCard)] "
                                                 value={promiseForm.type}
                                                 onChange={(e) =>
                                                     setPromiseForm({
@@ -1140,7 +1104,7 @@ const disabledBtn =
                                             </label>
                                             <input
                                                 type="date"
-                                                className="w-full border p-2 rounded bg-white"
+                                                className="w-full border p-2 rounded bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]"
                                                 min={getTomorrowDate()}   // 🔥 Only tomorrow onwards allowed
                                                 value={promiseForm.dueDate}
                                                 onChange={(e) =>
@@ -1150,9 +1114,6 @@ const disabledBtn =
                                                     })
                                                 }
                                             />
-
-
-
                                         </div>
 
                                         {/* Notes */}
@@ -1162,7 +1123,7 @@ const disabledBtn =
                                             </label>
 
                                             <textarea
-                                                className="w-full border p-2 rounded bg-white"
+                                                className="w-full border p-2 rounded bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)] "
                                                 placeholder="Explain why this promise is being created..."
                                                 value={promiseForm.notes}
                                                 onChange={(e) =>
@@ -1178,7 +1139,7 @@ const disabledBtn =
                                         {/* Save Button */}
                                         <button
                                             onClick={createPromise}
-                                            className="w-full border py-2 rounded text-sm font-medium bg-white hover:bg-gray-100"
+                                            className="w-full border py-2 rounded text-sm font-medium bg-[var(--background-card)] dark:bg-[var(--bgCard)] hover:bg-gray-100"
                                         >
                                             Save Promise
                                         </button>
@@ -1386,8 +1347,8 @@ const disabledBtn =
                 </div>
             )}
             {showOrderDetails && (
-                <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center">
-                    <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl overflow-hidden">
+                <div className="fixed inset-0  bg-black/40 z-[60] flex items-center justify-center">
+                    <div className="w-full max-w-3xl bg-[var(--background-card)] rounded-xl shadow-xl overflow-hidden">
 
                         {/* Header */}
                         <div className="p-4 border-b flex justify-between items-center">
@@ -1396,14 +1357,14 @@ const disabledBtn =
                             </div>
                             <button
                                 onClick={() => setShowOrderDetails(false)}
-                                className="px-3 py-1 border rounded text-sm"
+                                className="px-3 py-1 border rounded text-sm hover:bg-red-600"
                             >
                                 Close
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-6 space-y-4 text-sm">
+                        <div className="p-6 space-y-4 text-sm ">
 
                             {loadingOrder && (
                                 <div className="text-center py-10 text-gray-500">
@@ -1421,12 +1382,11 @@ const disabledBtn =
                                         <div><b>Payment:</b> {selectedOrder.paymentMethod || selectedOrder.paymentStatus || "—"}</div>
 
                                     </div>
-
                                     {selectedOrder.return && (
-                                        <div className="border rounded p-4 bg-yellow-50">
-                                            <div className="font-medium mb-2">Return Request</div>
+                                        <div className="border rounded p-4 bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]">
+                                            <div className="font-medium mb-2 ">Return Request</div>
 
-                                            <div className="text-sm space-y-1">
+                                            <div className="text-sm space-y-1 ">
                                                 <div>
                                                     <b>Status:</b>{" "}
                                                     {selectedOrder.return.status.toUpperCase()}
@@ -1469,7 +1429,7 @@ const disabledBtn =
 
                                     {/* ITEMS */}
                                     <div className="border rounded">
-                                        <div className="p-2 font-medium bg-gray-50 border-b">Items</div>
+                                        <div className="p-2 font-bold bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b text-m">Items</div>
                                         <table className="w-full text-sm">
                                             <thead className="border-b">
                                                 <tr>

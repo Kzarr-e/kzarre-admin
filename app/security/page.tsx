@@ -231,9 +231,9 @@ const getAuthHeaders = (): Record<string, string> => {
         </p>
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex gap-8 ">
         {/* LEFT SIDEBAR */}
-        <aside className="w-64 border rounded-xl p-4 space-y-2 bg-white">
+        <aside className="w-64 border rounded-xl p-4 space-y-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] ">
           <h3 className="font-semibold mb-3 text-sm text-gray-500">
             PAGES
           </h3>
@@ -254,7 +254,7 @@ const getAuthHeaders = (): Record<string, string> => {
         </aside>
 
         {/* MAIN EDITOR */}
-        <main className="flex-1 border rounded-xl p-6 space-y-6 bg-white">
+        <main className="flex-1 border rounded-xl p-6 space-y-6 bg-[var(--background-card)] dark:bg-[var(--bgCard)] ">
           {loading || !pageData ? (
             <div className="text-gray-400">Loading page…</div>
           ) : (
@@ -265,7 +265,7 @@ const getAuthHeaders = (): Record<string, string> => {
                   Page Title
                 </label>
                 <input
-                  className="w-full border rounded px-3 py-2 text-sm"
+                  className="w-full border rounded px-3 py-2 text-sm bg-[var(--background-card)]"
                   value={pageData.title}
                   onChange={(e) =>
                     setPageData({ ...pageData, title: e.target.value })
@@ -275,17 +275,17 @@ const getAuthHeaders = (): Record<string, string> => {
 
               {/* ================= SECTION OVERVIEW TABLE ================= */}
               <div className="border rounded-lg overflow-hidden">
-                <div className="p-3 font-semibold bg-gray-50 border-b">
+                <div className="p-3 font-semibold bg-[var(--background-card)]  border-b">
                   Sections Overview
                 </div>
 
                 {pageData.sections.length === 0 ? (
-                  <div className="p-4 text-sm text-gray-500">
+                  <div className="p-4 text-sm bg-[var(--background-card)] text-gray-500">
                     No sections added yet.
                   </div>
                 ) : (
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-100 border-b">
+                    <thead className="bg-[var(--background-card)] border-b">
                       <tr>
                         <th className="px-3 py-2 text-left">#</th>
                         <th className="px-3 py-2 text-left">Type</th>
@@ -334,7 +334,7 @@ const getAuthHeaders = (): Record<string, string> => {
               </div>
 
               {/* ================= SECTION EDITORS ================= */}
-              <div className="space-y-8">
+              <div className="space-y-8 ">
                 {pageData.sections.map((section, idx) => (
                   <SectionEditor
                     key={section.id}
@@ -459,11 +459,11 @@ function SectionEditor({
       {/* FAQ QUESTION */}
       {isFAQ && (
         <div>
-          <label className="block text-xs font-medium mb-1 text-gray-600">
+          <label className="block text-xs font-medium mb-1  text-gray-600">
             Question
           </label>
           <input
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full border rounded px-3 bg-[var(--background-card)] dark:bg-[var(--bgCard)]  py-2 text-sm"
             value={question}
             onChange={(e) => {
               const q = e.target.value;
@@ -485,7 +485,7 @@ function SectionEditor({
         </label>
 
         {/* TOOLBAR */}
-        <div className="flex gap-2 border p-2 rounded bg-gray-50 flex-wrap mb-2">
+        <div className="flex gap-2 border p-2 rounded  bg-[var(--background-card)] dark:bg-[var(--bgCard)] flex-wrap mb-2">
           <ToolbarButton onClick={() => editor?.chain().focus().toggleBold().run()} label="B" />
           <ToolbarButton onClick={() => editor?.chain().focus().toggleItalic().run()} label="I" />
           <ToolbarButton onClick={() => editor?.chain().focus().toggleUnderline().run()} label="U" />
@@ -495,7 +495,7 @@ function SectionEditor({
 
         <EditorContent
           editor={editor}
-          className="ProseMirror min-h-[150px] border rounded p-3 bg-white"
+          className="ProseMirror min-h-[150px] border rounded p-3 dark:bg-[var(--bgCard)]"
         />
       </div>
     </div>

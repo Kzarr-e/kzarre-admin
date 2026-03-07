@@ -138,7 +138,7 @@ export default function MarketingCenter() {
       </header>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 ">
         <Kpi title="Subscribers" value={subscribers.length} icon={<Users />} />
         <Kpi
           title="Total Campaigns"
@@ -327,10 +327,10 @@ export default function MarketingCenter() {
 
 function Kpi({ title, value, icon }: any) {
   return (
-    <div className="bg-white p-5 rounded-xl border shadow-sm flex items-center gap-4">
-      <div className="p-3 rounded-lg bg-gray-100">{icon}</div>
+    <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] p-5 rounded-xl border shadow-sm flex items-center gap-4">
+      <div className="p-3 rounded-lg bg-green-100 dark:bg-green-600">{icon}</div>
       <div>
-        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-sm text-black-500">{title}</p>
         <p className="text-2xl font-bold">{value}</p>
       </div>
     </div>
@@ -339,7 +339,7 @@ function Kpi({ title, value, icon }: any) {
 
 function Card({ title, children }: any) {
   return (
-    <div className="bg-white p-6 rounded-xl border shadow-sm">
+    <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]  p-6 rounded-xl border shadow-sm">
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       <div className="max-h-[400px] overflow-y-auto">{children}</div>
     </div>

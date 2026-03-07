@@ -202,20 +202,20 @@ export default function ShippingAndLogisticsPage() {
       <h1 className="text-2xl font-bold">Shipping & Logistics (Admin)</h1>
 
       {/* ADD / UPDATE COURIER */}
-      <div className="border rounded-xl p-4 bg-white">
+      <div className="border rounded-xl bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]">
         <h2 className="font-semibold mb-3">Add / Update Courier</h2>
 
         <div className="grid md:grid-cols-2 gap-3">
           <input
             placeholder="Courier Name"
-            className="border px-3 py-2 rounded"
+            className="border px-3 py-2 rounded bg-[var(--background-card)] dark:bg-[var(--bgCard)]"
             value={form.name || ""}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
 
           <input
             placeholder="Slug (easyship)"
-            className="border px-3 py-2 rounded"
+            className="border px-3 py-2 rounded bg-[var(--background-card)] dark:bg-[var(--bgCard)]"
             value={form.slug || ""}
             onChange={(e) =>
               setForm({
@@ -226,7 +226,7 @@ export default function ShippingAndLogisticsPage() {
           />
 
           <select
-            className="border px-3 py-2 rounded"
+            className="border p-2 py-2 rounded bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]"
             value={form.auth?.type}
             onChange={(e) =>
               setForm({
@@ -241,16 +241,16 @@ export default function ShippingAndLogisticsPage() {
 
           <input
             placeholder="API Token"
-            className="border px-3 py-2 rounded"
+            className="border px-3 py-2 rounded bg-[var(--background-card)] dark:bg-[var(--bgCard)]"
             value={form.auth?.token || ""}
-          onChange={(e) =>
-  setForm({
-    ...form,
-    auth: {
-      type: form.auth?.type ?? "bearer", // ✅ ALWAYS PRESENT
-      token: e.target.value,
-    },
-  })
+            onChange={(e) =>
+              setForm({
+                ...form,
+                auth: {
+                  type: form.auth?.type ?? "bearer", // ✅ ALWAYS PRESENT
+                  token: e.target.value,
+                },
+              })
 
             }
           />
@@ -266,7 +266,7 @@ export default function ShippingAndLogisticsPage() {
       </div>
 
       {/* COURIERS */}
-      <div className="border rounded-xl p-4 bg-white">
+      <div className="border rounded-xl p-4 bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]">
         <h2 className="font-semibold mb-3">Courier Partners</h2>
 
         {couriers.map((c) => (
@@ -299,7 +299,7 @@ export default function ShippingAndLogisticsPage() {
         <h2 className="text-xl font-semibold mb-3">Orders</h2>
 
         {orders.map((o) => (
-          <div key={o._id} className="border rounded-xl p-4 mb-3 bg-white">
+          <div key={o._id} className="border rounded-xl p-4 mb-3 bg-[var(--background-card)] px-4 py-2 dark:bg-[var(--bgCard)]">
             <h3 className="font-semibold">Order #{o.orderId}</h3>
             <p>Status: {o.status}</p>
             <p>Amount: ${o.amount}</p>
@@ -320,7 +320,7 @@ export default function ShippingAndLogisticsPage() {
                     target="_blank"
                     className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded text-xs"
                   >
-                     Print Label
+                    Print Label
                   </a>
                 )}
 

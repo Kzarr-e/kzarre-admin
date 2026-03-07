@@ -139,6 +139,7 @@ export default function SystemConfigurationPage() {
             <input
               type="checkbox"
               checked={maintenance.maintenanceMode}
+              className="dark:bg-[var(--bgCard)]"
               onChange={(e) => {
                 const updated = {
                   ...maintenance,
@@ -155,7 +156,7 @@ export default function SystemConfigurationPage() {
             </label>
 
             <input
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded px-3 py-2 text-sm dark:bg-[var(--bgCard)]"
               value={maintenance.maintenanceMessage}
               onChange={(e) =>
                 setMaintenance({
@@ -173,7 +174,7 @@ export default function SystemConfigurationPage() {
 
             <input
               type="datetime-local"
-              className="border rounded px-3 py-2 text-sm"
+              className="border rounded px-3 py-2 text-sm dark:bg-[var(--bgCard)]"
               value={maintenance.maintenanceEta}
               onChange={(e) =>
                 setMaintenance({
