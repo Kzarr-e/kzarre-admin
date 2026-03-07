@@ -184,7 +184,7 @@ const ECommerceSection: React.FC = () => {
     "inventory" | "addProduct" | "orders" | "discounts"
   >("inventory");
   const [activeTab, setActiveTab] = useState("product");
-
+  const [loadingDiscounts, setLoadingDiscounts] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -364,73 +364,19 @@ const ECommerceSection: React.FC = () => {
 
   const fetchDiscounts = async () => {
     try {
+      setLoadingDiscounts(true);
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/discounts`
       );
-      if (!res.ok) {
-        console.warn("Discounts fetch failed:", res.status, "- Using mock data");
-        // Mock data for demonstration
-        setDiscounts([
-          {
-            _id: "1",
-            id: "SUMMER2024",
-            name: "Summer Sale Discount",
-            description: "20% off on summer collection",
-            type: "percentage",
-            value: 20,
-            minOrderAmount: 50,
-            maxDiscountAmount: 100,
-            usageLimit: 1000,
-            usedCount: 45,
-            startDate: "2024-06-01T00:00",
-            endDate: "2024-08-31T23:59",
-            isActive: true,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: "2",
-            id: "WELCOME",
-            name: "Welcome Discount",
-            description: "15% off for new customers",
-            type: "percentage",
-            value: 15,
-            minOrderAmount: 25,
-            usageLimit: 500,
-            usedCount: 123,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-          }
-        ]);
-        return;
-      }
+
       const data = await res.json();
-      const discountsArray: Discount[] = Array.isArray(data.discounts)
-        ? data.discounts
-        : Array.isArray(data)
-          ? data
-          : [];
-      setDiscounts(discountsArray);
+
+      setDiscounts(data.discounts || []);
     } catch (err) {
-      console.error("Error fetching discounts:", err, "- Using mock data");
-      // Mock data for demonstration
-      setDiscounts([
-        {
-          _id: "1",
-          id: "SUMMER2024",
-          name: "Summer Sale Discount",
-          description: "20% off on summer collection",
-          type: "percentage",
-          value: 20,
-          minOrderAmount: 50,
-          maxDiscountAmount: 100,
-          usageLimit: 1000,
-          usedCount: 45,
-          startDate: "2024-06-01T00:00",
-          endDate: "2024-08-31T23:59",
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        }
-      ]);
+      console.error(err);
+    } finally {
+      setLoadingDiscounts(false);
     }
   };
 
@@ -512,23 +458,23 @@ const ECommerceSection: React.FC = () => {
   };
 
   // Fetch once when component mounts
-useEffect(() => {
-  fetchProducts();
-  fetchOrders();
-  fetchDiscounts();
-  fetchCoupons();
+  useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+    fetchDiscounts();
+    fetchCoupons();
 
-  const interval = setInterval(() => {
-    if (currentView === "inventory") fetchProducts();
-    if (currentView === "orders") fetchOrders();
-    if (currentView === "discounts") {
-      fetchDiscounts();
-      fetchCoupons();
-    }
-  }, 30000);
+    const interval = setInterval(() => {
+      if (currentView === "inventory") fetchProducts();
+      if (currentView === "orders") fetchOrders();
+      if (currentView === "discounts") {
+        fetchDiscounts();
+        fetchCoupons();
+      }
+    }, 30000);
 
-  return () => clearInterval(interval);
-}, [currentView]);
+    return () => clearInterval(interval);
+  }, [currentView]);
 
   // Selected product modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -635,7 +581,7 @@ useEffect(() => {
         throw new Error(data.message || `Create failed with ${res.status}`);
       }
 
-     toast.success("Discount created successfully!");
+      toast.success("Discount created successfully!");
       setCurrentDiscountView("discounts");
       setDiscountForm({
         name: "",
@@ -653,6 +599,7 @@ useEffect(() => {
         isActive: true,
       });
       await fetchDiscounts();
+      setCurrentDiscountView("discounts");
     } catch (err) {
       console.error("Create discount error:", err);
       // For demo purposes, simulate success since backend doesn't exist
@@ -698,6 +645,7 @@ useEffect(() => {
       setCurrentDiscountView("discounts");
       setSelectedDiscount(null);
       await fetchDiscounts();
+      setCurrentDiscountView("discounts");
     } catch (err) {
       console.error("Update discount error:", err);
       toast.error("Something went wrong");
@@ -726,7 +674,7 @@ useEffect(() => {
       await fetchDiscounts();
     } catch (err) {
       console.error("Delete discount error:", err);
-     toast.error("Something went wrong");
+      toast.error("Something went wrong");
     }
   };
 
@@ -1436,7 +1384,7 @@ useEffect(() => {
         xhr.onerror = () => {
           setUploading(false);
           console.error("Network error during upload");
-         toast.error("Network error during upload");
+          toast.error("Network error during upload");
           reject(new Error("Network error"));
         };
 
@@ -3534,13 +3482,22 @@ useEffect(() => {
         {/* Discounts List */}
         {(currentDiscountView === "discounts") && (
           <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
-            <div className="p-6 border-b ">
-              <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
-                Automatic Discounts ({discounts.length})
-              </h3>
-              <p className="text-sm text-[var(--textSecondary)] mt-1">
-                Discounts applied automatically based on conditions
-              </p>
+            <div className="p-6 border-b flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+                  Automatic Discounts ({discounts.length})
+                </h3>
+                <p className="text-sm text-[var(--textSecondary)] mt-1">
+                  Discounts applied automatically based on conditions
+                </p>
+              </div>
+
+              <input
+                placeholder="Search discounts..."
+                value={discountSearch}
+                onChange={(e) => setDiscountSearch(e.target.value)}
+                className="px-3 py-2 border rounded-lg bg-[var(--background)] text-sm"
+              />
             </div>
 
             <div className="overflow-x-auto">
@@ -3564,61 +3521,65 @@ useEffect(() => {
                       </td>
                     </tr>
                   ) : (
-                    discounts.map((discount) => (
-                      <tr key={discount._id} className="border-b  hover:bg-[var(--background)] transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
-                          {discount.name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          <span className={`px-2 py-1 rounded-full text-xs ${discount.type === "percentage"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                            }`}>
-                            {discount.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {discount.type === "percentage" ? `${discount.value}%` : `$${discount.value}`}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {discount.minOrderAmount ? `$${discount.minOrderAmount}` : "—"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {discount.usedCount || 0}
-                          {discount.usageLimit ? ` / ${discount.usageLimit}` : ""}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${discount.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                            }`}>
-                            {discount.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedDiscount(discount);
-                                setDiscountForm(discount);
-                                setCurrentDiscountView("editDiscount");
-                              }}
-                              className="p-1 hover:bg-gray-100 rounded text-blue-600"
-                              title="Edit"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDiscount(discount._id!)}
-                              className="p-1 hover:bg-gray-100 rounded text-red-600"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    discounts
+                      .filter((d) =>
+                        d.name.toLowerCase().includes(discountSearch.toLowerCase())
+                      )
+                      .map((discount) => (
+                        <tr key={discount._id} className="border-b  hover:bg-[var(--background)] transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
+                            {discount.name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            <span className={`px-2 py-1 rounded-full text-xs ${discount.type === "percentage"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                              }`}>
+                              {discount.type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {discount.type === "percentage" ? `${discount.value}%` : `$${discount.value}`}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {discount.minOrderAmount ? `$${discount.minOrderAmount}` : "—"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {discount.usedCount || 0}
+                            {discount.usageLimit ? ` / ${discount.usageLimit}` : ""}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs ${discount.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                              }`}>
+                              {discount.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedDiscount(discount);
+                                  setDiscountForm(discount);
+                                  setCurrentDiscountView("editDiscount");
+                                }}
+                                className="p-1 hover:bg-gray-100 rounded text-blue-600"
+                                title="Edit"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteDiscount(discount._id!)}
+                                className="p-1 hover:bg-gray-100 rounded text-red-600"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
@@ -3629,13 +3590,22 @@ useEffect(() => {
         {/* Coupons List */}
         {currentDiscountView === "coupons" && (
           <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
-            <div className="p-6 border-b ">
-              <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
-                Coupon Codes ({coupons.length})
-              </h3>
-              <p className="text-sm text-[var(--textSecondary)] mt-1">
-                Code-based discounts that customers can apply at checkout
-              </p>
+            <div className="p-6 border-b flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+                  Coupon Codes ({coupons.length})
+                </h3>
+                <p className="text-sm text-[var(--textSecondary)] mt-1">
+                  Code-based discounts that customers can apply at checkout
+                </p>
+              </div>
+
+              <input
+                placeholder="Search coupons..."
+                value={couponSearch}
+                onChange={(e) => setCouponSearch(e.target.value)}
+                className="px-3 py-2 border rounded-lg bg-[var(--background)] text-sm"
+              />
             </div>
 
             <div className="overflow-x-auto">
@@ -3659,61 +3629,66 @@ useEffect(() => {
                       </td>
                     </tr>
                   ) : (
-                    coupons.map((coupon) => (
-                      <tr key={coupon._id} className="border-b hover:bg-[var(--background)] transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)] font-mono">
-                          {coupon.code}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {coupon.name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          <span className={`px-2 py-1 rounded-full text-xs ${coupon.type === "percentage"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                            }`}>
-                            {coupon.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {coupon.type === "percentage" ? `${coupon.value}%` : `$${coupon.value}`}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
-                          {coupon.usedCount || 0}
-                          {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ""}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${coupon.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                            }`}>
-                            {coupon.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedCoupon(coupon);
-                                setCouponForm(coupon);
-                                setCurrentDiscountView("editCoupon");
-                              }}
-                              className="p-1 hover:bg-gray-100 rounded text-blue-600"
-                              title="Edit"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCoupon(coupon._id!)}
-                              className="p-1 hover:bg-gray-100 rounded text-red-600"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    coupons
+                      .filter((c) =>
+                        c.code.toLowerCase().includes(couponSearch.toLowerCase()) ||
+                        c.name.toLowerCase().includes(couponSearch.toLowerCase())
+                      )
+                      .map((coupon) => (
+                        <tr key={coupon._id} className="border-b hover:bg-[var(--background)] transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)] font-mono">
+                            {coupon.code}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {coupon.name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            <span className={`px-2 py-1 rounded-full text-xs ${coupon.type === "percentage"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                              }`}>
+                              {coupon.type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {coupon.type === "percentage" ? `${coupon.value}%` : `$${coupon.value}`}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                            {coupon.usedCount || 0}
+                            {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ""}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs ${coupon.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                              }`}>
+                              {coupon.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedCoupon(coupon);
+                                  setCouponForm(coupon);
+                                  setCurrentDiscountView("editCoupon");
+                                }}
+                                className="p-1 hover:bg-gray-100 rounded text-blue-600"
+                                title="Edit"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCoupon(coupon._id!)}
+                                className="p-1 hover:bg-gray-100 rounded text-red-600"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
@@ -3915,292 +3890,296 @@ useEffect(() => {
                 <input
                   type="text"
                   value={couponForm.code}
-                  onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })
+                  }
                   className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)] font-mono"
                   placeholder="SUMMER2024"
                 />
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Coupon Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={couponForm.name}
+                    onChange={(e) => setCouponForm({ ...couponForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                    placeholder="Summer Sale 2024"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Discount Type *
+                  </label>
+                  <select
+                    value={couponForm.type}
+                    onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value as "percentage" | "fixed" })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount ($)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Discount Value *
+                  </label>
+                  <input
+                    type="number"
+                    value={couponForm.value}
+                    onChange={(e) => setCouponForm({ ...couponForm, value: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                    placeholder={couponForm.type === "percentage" ? "10" : "50"}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Minimum Order Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={couponForm.minOrderAmount}
+                    onChange={(e) => setCouponForm({ ...couponForm, minOrderAmount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Usage Limit
+                  </label>
+                  <input
+                    type="number"
+                    value={couponForm.usageLimit}
+                    onChange={(e) => setCouponForm({ ...couponForm, usageLimit: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                    placeholder="Unlimited"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Usage Limit Per User
+                  </label>
+                  <input
+                    type="number"
+                    value={couponForm.usageLimitPerUser}
+                    onChange={(e) => setCouponForm({ ...couponForm, usageLimitPerUser: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                    placeholder="1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={couponForm.startDate}
+                    onChange={(e) => setCouponForm({ ...couponForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={couponForm.endDate}
+                    onChange={(e) => setCouponForm({ ...couponForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  />
+                </div>
               </div>
 
-              <div>
+              <div className="mt-6">
                 <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Coupon Name *
+                  Description
                 </label>
-                <input
-                  type="text"
-                  value={couponForm.name}
-                  onChange={(e) => setCouponForm({ ...couponForm, name: e.target.value })}
+                <textarea
+                  value={couponForm.description}
+                  onChange={(e) => setCouponForm({ ...couponForm, description: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                  placeholder="Summer Sale 2024"
+                  rows={3}
+                  placeholder="Optional description for this coupon"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Discount Type *
+              <div className="mt-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={couponForm.isActive}
+                    onChange={(e) => setCouponForm({ ...couponForm, isActive: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-[var(--textPrimary)]">Active</span>
                 </label>
-                <select
-                  value={couponForm.type}
-                  onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value as "percentage" | "fixed" })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
-                </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Discount Value *
-                </label>
-                <input
-                  type="number"
-                  value={couponForm.value}
-                  onChange={(e) => setCouponForm({ ...couponForm, value: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                  placeholder={couponForm.type === "percentage" ? "10" : "50"}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Minimum Order Amount
-                </label>
-                <input
-                  type="number"
-                  value={couponForm.minOrderAmount}
-                  onChange={(e) => setCouponForm({ ...couponForm, minOrderAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Usage Limit
-                </label>
-                <input
-                  type="number"
-                  value={couponForm.usageLimit}
-                  onChange={(e) => setCouponForm({ ...couponForm, usageLimit: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                  placeholder="Unlimited"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Usage Limit Per User
-                </label>
-                <input
-                  type="number"
-                  value={couponForm.usageLimitPerUser}
-                  onChange={(e) => setCouponForm({ ...couponForm, usageLimitPerUser: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                  placeholder="1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={couponForm.startDate}
-                  onChange={(e) => setCouponForm({ ...couponForm, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                  End Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={couponForm.endDate}
-                  onChange={(e) => setCouponForm({ ...couponForm, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-[var(--textPrimary)] mb-2">
-                Description
-              </label>
-              <textarea
-                value={couponForm.description}
-                onChange={(e) => setCouponForm({ ...couponForm, description: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
-                rows={3}
-                placeholder="Optional description for this coupon"
-              />
-            </div>
-
-            <div className="mt-6">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={couponForm.isActive}
-                  onChange={(e) => setCouponForm({ ...couponForm, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <span className="text-sm text-[var(--textPrimary)]">Active</span>
-              </label>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  if (currentDiscountView === "addCoupon") {
-                    handleCreateCoupon();
-                  } else {
-                    handleUpdateCoupon(selectedCoupon!._id!);
-                  }
-                }}
-                className="px-6 py-2 text-black font-medium rounded-lg hover:opacity-90"
-                style={{ backgroundColor: "#A0EDA8" }}
-              >
-                {currentDiscountView === "addCoupon" ? "Create Coupon" : "Update Coupon"}
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentDiscountView("coupons");
-                  setSelectedCoupon(null);
-                  setCouponForm({
-                    code: "",
-                    name: "",
-                    description: "",
-                    type: "percentage",
-                    value: 0,
-                    minOrderAmount: 0,
-                    maxDiscountAmount: 0,
-                    applicableProducts: [],
-                    applicableCategories: [],
-                    applicableUsers: [],
-                    usageLimit: 0,
-                    usageLimitPerUser: 1,
-                    startDate: "",
-                    endDate: "",
-                    isActive: true,
-                  });
-                }}
-                className="px-6 py-2 bg-[var(--background)] border  text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // -------------------- Main Render --------------------
-  return (
-    
-    <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
-    
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
-              E-Commerce Management
-            </h1>
-            <p className="text-sm text-[var(--textSecondary)] mt-1">
-              Manage your website's Ecommerce
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {currentView === "inventory" && (
-              <button
-                onClick={() => setCurrentView("addProduct")}
-                className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
-                style={{ backgroundColor: "#A0EDA8" }}
-              >
-                <Plus size={18} className="dark:text-white" /> Add Product
-              </button>
-            )}
-            {currentView === "addProduct" && (
-              <>
+              <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setCurrentView("inventory")}
-                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
+                  onClick={() => {
+                    if (currentDiscountView === "addCoupon") {
+                      handleCreateCoupon();
+                    } else {
+                      handleUpdateCoupon(selectedCoupon!._id!);
+                    }
+                  }}
+                  className="px-6 py-2 text-black font-medium rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: "#A0EDA8" }}
+                >
+                  {currentDiscountView === "addCoupon" ? "Create Coupon" : "Update Coupon"}
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentDiscountView("coupons");
+                    setSelectedCoupon(null);
+                    setCouponForm({
+                      code: "",
+                      name: "",
+                      description: "",
+                      type: "percentage",
+                      value: 0,
+                      minOrderAmount: 0,
+                      maxDiscountAmount: 0,
+                      applicableProducts: [],
+                      applicableCategories: [],
+                      applicableUsers: [],
+                      usageLimit: 0,
+                      usageLimitPerUser: 1,
+                      startDate: "",
+                      endDate: "",
+                      isActive: true,
+                    });
+                  }}
+                  className="px-6 py-2 bg-[var(--background)] border  text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
                 >
                   Cancel
                 </button>
+              </div>
+            </div>
+        )}
+          </div>
+    </div>
+      );
+
+      // -------------------- Main Render --------------------
+      return (
+
+      <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
+
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
+                E-Commerce Management
+              </h1>
+              <p className="text-sm text-[var(--textSecondary)] mt-1">
+                Manage your website's Ecommerce
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {currentView === "inventory" && (
                 <button
-                  onClick={handleSaveProduct}
+                  onClick={() => setCurrentView("addProduct")}
                   className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
                   style={{ backgroundColor: "#A0EDA8" }}
-                  disabled={uploading}
                 >
-                  {uploading ? (
-                    <>
-                      <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
-                      {uploadProgress}%
-                    </>
-                  ) : (
-                    <>
-                      <Save size={18} /> Save & Publish
-                    </>
-                  )}
+                  <Plus size={18} className="dark:text-white" /> Add Product
                 </button>
-              </>
-            )}
+              )}
+              {currentView === "addProduct" && (
+                <>
+                  <button
+                    onClick={() => setCurrentView("inventory")}
+                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveProduct}
+                    className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
+                    style={{ backgroundColor: "#A0EDA8" }}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <>
+                        <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
+                        {uploadProgress}%
+                      </>
+                    ) : (
+                      <>
+                        <Save size={18} /> Save & Publish
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
-        <div className="flex gap-6">
-          <button
-            onClick={() => {
-              setActiveTab("inventory");
-              setCurrentView("inventory");
-            }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
-              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Inventory
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("order");
-              setCurrentView("orders");
-            }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
-              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Order
-          </button>
-          <button
-            onClick={() => setActiveTab("discounts")}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
-              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Discounts & Coupons
-          </button>
+        {/* Tabs */}
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
+          <div className="flex gap-6">
+            <button
+              onClick={() => {
+                setActiveTab("inventory");
+                setCurrentView("inventory");
+              }}
+              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+                }`}
+            >
+              Inventory
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("order");
+                setCurrentView("orders");
+              }}
+              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+                }`}
+            >
+              Order
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("discounts");
+                setCurrentView("discounts");
+              }}
+              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+                }`}
+            >
+              Discounts & Coupons
+            </button>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-6">
+          {currentView === "inventory" && renderInventory()}
+          {currentView === "addProduct" && renderAddProduct()}
+          {currentView === "orders" && renderOrders()}
+          {currentView === "discounts" && renderDiscounts()}
         </div>
       </div>
-
-      {/* Content Area */}
-      <div className="p-6">
-        {currentView === "inventory" && renderInventory()}
-        {currentView === "addProduct" && renderAddProduct()}
-        {currentView === "orders" && renderOrders()}
-        {currentView === "discounts" && renderDiscounts()}
-      </div>
-    </div>
-  );
+      );
 };
 
-export default ECommerceSection;
+      export default ECommerceSection;
