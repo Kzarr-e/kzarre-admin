@@ -223,7 +223,6 @@ const ECommerceSection: React.FC = () => {
     });
   };
 
-
   // Product management states
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -292,7 +291,6 @@ const ECommerceSection: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
-
   const updateStatus = async (status: string) => {
     if (!statusOrderId) return;
 
@@ -329,7 +327,6 @@ const ECommerceSection: React.FC = () => {
       toast.error("Something went wrong");
     }
   };
-
   // Fetch orders (production)
   const [orders, setOrders] = useState<Order[]>([]);
   const fetchOrders = async () => {
@@ -357,11 +354,9 @@ const ECommerceSection: React.FC = () => {
       setOrders([]);
     }
   };
-
   // Fetch discounts and coupons
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-
   const fetchDiscounts = async () => {
     try {
       setLoadingDiscounts(true);
@@ -379,7 +374,6 @@ const ECommerceSection: React.FC = () => {
       setLoadingDiscounts(false);
     }
   };
-
   const fetchCoupons = async () => {
     try {
       const res = await fetch(
@@ -456,7 +450,6 @@ const ECommerceSection: React.FC = () => {
       ]);
     }
   };
-
   // Fetch once when component mounts
   useEffect(() => {
     fetchProducts();
@@ -475,21 +468,19 @@ const ECommerceSection: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [currentView]);
-
   // Selected product modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
-
   // Edit Product
   const [variants, setVariants] = useState<Variant[]>([]);
-
   // Discount/Coupon Management States
   const [currentDiscountView, setCurrentDiscountView] = useState<"discounts" | "coupons" | "addDiscount" | "addCoupon" | "editDiscount" | "editCoupon">("discounts");
   const [selectedDiscount, setSelectedDiscount] = useState<Discount | null>(null);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
-
+  const [discountSearch, setDiscountSearch] = useState("");
+  const [couponSearch, setCouponSearch] = useState("");
   // Discount Form State
   const [discountForm, setDiscountForm] = useState<Partial<Discount>>({
     name: "",
@@ -506,7 +497,6 @@ const ECommerceSection: React.FC = () => {
     endDate: "",
     isActive: true,
   });
-
   // Coupon Form State
   const [couponForm, setCouponForm] = useState<Partial<Coupon>>({
     code: "",
@@ -525,7 +515,6 @@ const ECommerceSection: React.FC = () => {
     endDate: "",
     isActive: true,
   });
-
   // DELETE
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
@@ -561,9 +550,7 @@ const ECommerceSection: React.FC = () => {
       setProducts(prev);
     }
   };
-
   // ================= DISCOUNT API FUNCTIONS =================
-
   const handleCreateDiscount = async () => {
     try {
       const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") || "" : "";
@@ -677,9 +664,7 @@ const ECommerceSection: React.FC = () => {
       toast.error("Something went wrong");
     }
   };
-
   // ================= COUPON API FUNCTIONS =================
-
   const handleCreateCoupon = async () => {
     try {
       const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") || "" : "";
@@ -795,7 +780,6 @@ const ECommerceSection: React.FC = () => {
       toast.error("Something went wrong");
     }
   };
-
   // Stats
   const stats = {
     totalProducts: products.length,
@@ -820,8 +804,6 @@ const ECommerceSection: React.FC = () => {
 
     returns: orders.filter((o) => o.status === "cancelled").length,
   };
-
-
   // -------------------- Product Form (extended) --------------------
   type ProductForm = {
     name: string;
@@ -856,7 +838,6 @@ const ECommerceSection: React.FC = () => {
     };
     faq: Array<{ question: string; answer: string }>;
   };
-
   const [productForm, setProductForm] = useState<ProductForm>({
     name: "",
     description: "",
@@ -889,7 +870,6 @@ const ECommerceSection: React.FC = () => {
     },
     faq: [],
   });
-
   // upload / image states
   const [newVariant, setNewVariant] = useState<Partial<Variant>>({
     size: "",
@@ -953,7 +933,6 @@ const ECommerceSection: React.FC = () => {
       handleNewImageFiles(Array.from(files));
     }
   };
-
   // Helper: push previews for files
   const addPreviewsForFiles = (files: File[]) => {
     const previews: {
@@ -983,7 +962,6 @@ const ECommerceSection: React.FC = () => {
     });
     // if none are image files, nothing will be pushed
   };
-
   // Called on file input change for product images
   const handleNewImageFiles = (files: File[]) => {
     const imgs = files.filter((f) => f.type.startsWith("image/"));
@@ -991,14 +969,12 @@ const ECommerceSection: React.FC = () => {
     setNewImages((prev) => [...prev, ...imgs]);
     addPreviewsForFiles(imgs);
   };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       handleNewImageFiles(Array.from(files));
     }
   };
-
   // remove existing image (by URL)
   const removeExistingImage = (url: string) => {
     setExistingImages((prev) => prev.filter((u) => u !== url));
@@ -1057,7 +1033,6 @@ const ECommerceSection: React.FC = () => {
     setNewCustomerPhotoFiles((prev) => prev.filter((f) => f.name !== name));
     setCustomerPhotosPreview((prev) => prev.filter((p) => p.name !== name));
   };
-
   // -------------------- form handlers --------------------
   const handleProductInputChange = (field: string, value: any) => {
     setProductForm((prev) => ({
@@ -1066,7 +1041,6 @@ const ECommerceSection: React.FC = () => {
       [field]: value,
     }));
   };
-
   const handleGenderChange = (gender: string) => {
     setProductForm((prev) => ({
       ...prev,
@@ -1075,7 +1049,6 @@ const ECommerceSection: React.FC = () => {
         : [...prev.gender, gender],
     }));
   };
-
   const handleAddVariant = () => {
     if (newVariant.size) {
       const variant: Variant = {
@@ -1099,7 +1072,6 @@ const ECommerceSection: React.FC = () => {
       setShowAddVariant(false);
     }
   };
-
   const removeVariant = (id: number | string) =>
     setVariants((prev) => prev.filter((v) => v.id !== id));
 
@@ -1173,10 +1145,6 @@ const ECommerceSection: React.FC = () => {
     setCurrentView("addProduct");
   };
 
-
-
-  // Part 2/3 (continued)
-  // -------------------- Save product (uploads to backend) --------------------
   const handleSaveProduct = async () => {
     try {
       if (!productForm.name || !productForm.category) {
@@ -1833,7 +1801,6 @@ const ECommerceSection: React.FC = () => {
       </button>
     );
   }
-
   // -------------------- Render Add Product (with vertical tabs) --------------------
   const renderAddProduct = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -3479,7 +3446,6 @@ const ECommerceSection: React.FC = () => {
 
       {/* Content */}
       <div className="space-y-6">
-        {/* Discounts List */}
         {(currentDiscountView === "discounts") && (
           <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
             <div className="p-6 border-b flex items-center justify-between gap-4">
@@ -4025,7 +3991,6 @@ const ECommerceSection: React.FC = () => {
                   <span className="text-sm text-[var(--textPrimary)]">Active</span>
                 </label>
               </div>
-
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {
@@ -4040,6 +4005,7 @@ const ECommerceSection: React.FC = () => {
                 >
                   {currentDiscountView === "addCoupon" ? "Create Coupon" : "Update Coupon"}
                 </button>
+
                 <button
                   onClick={() => {
                     setCurrentDiscountView("coupons");
@@ -4062,124 +4028,126 @@ const ECommerceSection: React.FC = () => {
                       isActive: true,
                     });
                   }}
-                  className="px-6 py-2 bg-[var(--background)] border  text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
+                  className="px-6 py-2 bg-[var(--background)] border text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
                 >
                   Cancel
                 </button>
               </div>
+
             </div>
-        )}
           </div>
+        )}
+      </div>
+
     </div>
-      );
+  );
 
-      // -------------------- Main Render --------------------
-      return (
 
-      <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
 
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
-                E-Commerce Management
-              </h1>
-              <p className="text-sm text-[var(--textSecondary)] mt-1">
-                Manage your website's Ecommerce
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {currentView === "inventory" && (
+  return (
+    <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
+
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
+              E-Commerce Management
+            </h1>
+            <p className="text-sm text-[var(--textSecondary)] mt-1">
+              Manage your website's Ecommerce
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {currentView === "inventory" && (
+              <button
+                onClick={() => setCurrentView("addProduct")}
+                className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
+                style={{ backgroundColor: "#A0EDA8" }}
+              >
+                <Plus size={18} className="dark:text-white" /> Add Product
+              </button>
+            )}
+            {currentView === "addProduct" && (
+              <>
                 <button
-                  onClick={() => setCurrentView("addProduct")}
+                  onClick={() => setCurrentView("inventory")}
+                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProduct}
                   className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
                   style={{ backgroundColor: "#A0EDA8" }}
+                  disabled={uploading}
                 >
-                  <Plus size={18} className="dark:text-white" /> Add Product
+                  {uploading ? (
+                    <>
+                      <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
+                      {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} /> Save & Publish
+                    </>
+                  )}
                 </button>
-              )}
-              {currentView === "addProduct" && (
-                <>
-                  <button
-                    onClick={() => setCurrentView("inventory")}
-                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveProduct}
-                    className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
-                    style={{ backgroundColor: "#A0EDA8" }}
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <>
-                        <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
-                        {uploadProgress}%
-                      </>
-                    ) : (
-                      <>
-                        <Save size={18} /> Save & Publish
-                      </>
-                    )}
-                  </button>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
-          <div className="flex gap-6">
-            <button
-              onClick={() => {
-                setActiveTab("inventory");
-                setCurrentView("inventory");
-              }}
-              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-                }`}
-            >
-              Inventory
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("order");
-                setCurrentView("orders");
-              }}
-              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-                }`}
-            >
-              Order
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("discounts");
-                setCurrentView("discounts");
-              }}
-              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-                }`}
-            >
-              Discounts & Coupons
-            </button>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="p-6">
-          {currentView === "inventory" && renderInventory()}
-          {currentView === "addProduct" && renderAddProduct()}
-          {currentView === "orders" && renderOrders()}
-          {currentView === "discounts" && renderDiscounts()}
         </div>
       </div>
-      );
-};
 
-      export default ECommerceSection;
+      {/* Tabs */}
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
+        <div className="flex gap-6">
+          <button
+            onClick={() => {
+              setActiveTab("inventory");
+              setCurrentView("inventory");
+            }}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              }`}
+          >
+            Inventory
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("order");
+              setCurrentView("orders");
+            }}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              }`}
+          >
+            Order
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("discounts");
+              setCurrentView("discounts");
+            }}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              }`}
+          >
+            Discounts & Coupons
+          </button>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="p-6">
+        {currentView === "inventory" && renderInventory()}
+        {currentView === "addProduct" && renderAddProduct()}
+        {currentView === "orders" && renderOrders()}
+        {currentView === "discounts" && renderDiscounts()}
+      </div>
+    </div>
+  );
+};
+export default ECommerceSection;
