@@ -185,6 +185,7 @@ const ECommerceSection: React.FC = () => {
   >("inventory");
   const [activeTab, setActiveTab] = useState("product");
   const [loadingDiscounts, setLoadingDiscounts] = useState(false);
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -1123,21 +1124,32 @@ const ECommerceSection: React.FC = () => {
     }));
 
     setVariants(product.variants || []);
-    setExistingImages(product.gallery || []);
+
+    const normalizedGallery = (product.gallery || []).map((g) =>
+      g.startsWith("http") ? g : `${BASE}${g}`
+    );
+
+    setExistingImages(normalizedGallery);
+
     setImagePreviews(
-      (product.gallery || []).map((g) => ({
+      normalizedGallery.map((g) => ({
         id: Date.now() + Math.random(),
         url: g,
-        name: g.split("/").slice(-1)[0] || g,
+        name: g.split("/").slice(-1)[0],
       }))
     );
 
-    setExistingCustomerPhotos(product.customerPhotos || []);
+    const normalizedCustomerPhotos = (product.customerPhotos || []).map((g) =>
+      g.startsWith("http") ? g : `${BASE}${g}`
+    );
+
+    setExistingCustomerPhotos(normalizedCustomerPhotos);
+
     setCustomerPhotosPreview(
-      (product.customerPhotos || []).map((g) => ({
+      normalizedCustomerPhotos.map((g) => ({
         id: Date.now() + Math.random(),
         url: g,
-        name: g.split("/").slice(-1)[0] || g,
+        name: g.split("/").slice(-1)[0],
       }))
     );
 
@@ -1188,7 +1200,12 @@ const ECommerceSection: React.FC = () => {
       // Extract ordered URLs from imagePreviews
       const orderedGallery: string[] = imagePreviews
         .map((p) => (typeof p.url === "string" ? p.url : null))
-        .filter((url): url is string => typeof url === "string");
+        .filter(
+          (url): url is string =>
+            typeof url === "string" &&
+            !url.startsWith("data:") &&
+            !url.includes("base64")
+        );
 
       orderedGallery.forEach((url) => {
         formData.append("existingGallery[]", url);
@@ -1400,7 +1417,6 @@ const ECommerceSection: React.FC = () => {
   }) => {
     return newImages.some((f) => f.name === preview.name);
   };
-  // Part 3/3 (continued)
   // ------------- Render Inventory -------------
   const renderInventory = () => (
     <div className="space-y-6">
@@ -3132,7 +3148,7 @@ const ECommerceSection: React.FC = () => {
                     <p className="font-medium text-xl text-[var(--textPrimary)]">
                       {item.name}
                     </p>
-                    <br/>
+                    <br />
 
                     <p className="text-[var(--textSecondary)] ">
                       Qty: {item.qty}
