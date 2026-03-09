@@ -1983,7 +1983,7 @@ const ECommerceSection: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium dark:text-white  text-gray-700 mb-2">
+                <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                   Vendor
                 </label>
                 <input
@@ -2012,7 +2012,7 @@ const ECommerceSection: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Base Pricing
               </label>
               <input
@@ -2021,12 +2021,12 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("basePrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Sell Price
               </label>
               <input
@@ -2035,12 +2035,12 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("sellPrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Discount
               </label>
               <input
@@ -2049,12 +2049,12 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("discount", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Discount type
               </label>
               <select
@@ -2062,7 +2062,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("discountType", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="percentage">Percentage</option>
                 <option value="fixed">Fixed Amount</option>
@@ -2092,7 +2092,7 @@ const ECommerceSection: React.FC = () => {
             <div className="bg-[var(--background)] dark:bg-[var(--bgCard)] rounded-lg p-4 mb-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Size
                   </label>
                   <input
@@ -2101,12 +2101,12 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, size: e.target.value })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., M, L, XL"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Color
                   </label>
                   <input
@@ -2115,12 +2115,12 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, color: e.target.value })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Black, Blue"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Material
                   </label>
                   <input
@@ -2129,12 +2129,12 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, material: e.target.value })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Wool, Cotton"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Low Stock Alert
                   </label>
                   <input
@@ -2146,12 +2146,12 @@ const ECommerceSection: React.FC = () => {
                         lowStockAlert: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="21"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Stock
                   </label>
                   <input
@@ -2165,12 +2165,12 @@ const ECommerceSection: React.FC = () => {
                           : undefined,
                       })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="77"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     Barcode value
                   </label>
                   <input
@@ -2179,7 +2179,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, barcode: e.target.value })
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -2187,7 +2187,7 @@ const ECommerceSection: React.FC = () => {
 
               <div className="flex items-center gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                     SKU
                   </label>
                   <input
@@ -2196,7 +2196,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       handleProductInputChange("sku", e.target.value)
                     }
-                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -2210,7 +2210,7 @@ const ECommerceSection: React.FC = () => {
                   </button>
                   <button
                     onClick={generateSKU}
-                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border  text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-[var(--textSecondary)] hover:bg-gray-100 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
                   >
                     Generate SKU
                   </button>
@@ -2295,7 +2295,7 @@ const ECommerceSection: React.FC = () => {
           </h3>
           <div className="space-y-4">
             {/* Main preview */}
-            <div className="relative rounded-lg overflow-hidden bg-gray-100">
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border">
               {imagePreviews[selectedImage] ? (
                 <img
                   src={String(imagePreviews[selectedImage].url)}
@@ -2380,11 +2380,11 @@ const ECommerceSection: React.FC = () => {
               </label>
             </div>
           </div>
-         <p className="text-xs text-[var(--textSecondary)] mt-3">
-           Allowed formats: JPG, PNG, WEBP
-            <br/>
+          <p className="text-xs text-[var(--textSecondary)] mt-3">
+            Allowed formats: JPG, PNG, WEBP
+            <br />
             Maximum size: 10MB
-             <br/>
+            <br />
             Maximum images: 10
           </p>
 
@@ -2467,7 +2467,7 @@ const ECommerceSection: React.FC = () => {
                   onChange={(e) =>
                     handleProductInputChange("highlights", e.target.value)
                   }
-                  className="w-full p-3 border  rounded"
+                  className="w-full p-3 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                   rows={3}
                 />
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2479,7 +2479,7 @@ const ECommerceSection: React.FC = () => {
                   onChange={(e) =>
                     handleProductInputChange("materialDetails", e.target.value)
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
                   Care Instructions
@@ -2490,7 +2490,7 @@ const ECommerceSection: React.FC = () => {
                   onChange={(e) =>
                     handleProductInputChange("careInstructions", e.target.value)
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
               </div>
             )}
@@ -2509,7 +2509,7 @@ const ECommerceSection: React.FC = () => {
                       material: e.target.value,
                     })
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2524,7 +2524,7 @@ const ECommerceSection: React.FC = () => {
                       fit: e.target.value,
                     })
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2539,7 +2539,7 @@ const ECommerceSection: React.FC = () => {
                       washCare: e.target.value,
                     })
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2554,7 +2554,7 @@ const ECommerceSection: React.FC = () => {
                       pattern: e.target.value,
                     })
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2569,7 +2569,7 @@ const ECommerceSection: React.FC = () => {
                       origin: e.target.value,
                     })
                   }
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2584,7 +2584,7 @@ const ECommerceSection: React.FC = () => {
                       others: e.target.value,
                     })
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                 />
               </div>
             )}
@@ -2603,7 +2603,7 @@ const ECommerceSection: React.FC = () => {
                             list[idx].question = e.target.value;
                             handleProductInputChange("faq", list);
                           }}
-                          className="w-full p-2 border  rounded mb-2"
+                          className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded mb-2"
                         />
                         <input
                           placeholder="Answer"
@@ -2613,7 +2613,7 @@ const ECommerceSection: React.FC = () => {
                             list[idx].answer = e.target.value;
                             handleProductInputChange("faq", list);
                           }}
-                          className="w-full p-2 border  rounded"
+                          className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                         />
                       </div>
                       <button
@@ -2645,58 +2645,112 @@ const ECommerceSection: React.FC = () => {
             )}
 
             {detailsTab === "customer" && (
-              <div>
+              <div className="space-y-4">
+
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
                   Customer Photos
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleCustomerPhotosSelect}
-                  className="mb-2"
-                />
-                <div className="flex gap-2 flex-wrap">
-                  {/* show existing customer photos first */}
+
+                {/* Upload Area */}
+                <div className="border-2 border-dashed rounded-lg p-4 text-center bg-[var(--background)] hover:border-green-500 transition">
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      if (!e.target.files) return;
+
+                      const files = Array.from(e.target.files);
+
+                      // Validate images
+                      const validFiles = files.filter((file) => {
+
+                        if (!file.type.startsWith("image/")) {
+                          toast.error(`${file.name} is not a valid image`);
+                          return false;
+                        }
+
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast.error(`${file.name} exceeds 10MB`);
+                          return false;
+                        }
+
+                        return true;
+                      });
+
+                      if (validFiles.length) {
+                        handleCustomerPhotosSelect({
+                          target: { files: validFiles }
+                        } as any);
+                      }
+                    }}
+                    className="hidden"
+                    id="customer-photo-upload"
+                  />
+
+                  <label
+                    htmlFor="customer-photo-upload"
+                    className="cursor-pointer flex flex-col items-center justify-center gap-2"
+                  >
+                    <Upload size={22} className="text-gray-400" />
+                    <span className="text-sm text-[var(--textSecondary)]">
+                      Click to upload customer photos
+                    </span>
+                    <span className="text-xs text-[var(--textSecondary)]">
+                      JPG, PNG, WEBP • Max 10MB
+                    </span>
+                  </label>
+
+                </div>
+
+                {/* Image Preview Grid */}
+                <div className="grid grid-cols-4 gap-3">
+
+                  {/* Existing photos */}
                   {existingCustomerPhotos.map((url) => (
                     <div
                       key={url}
-                      className="w-20 h-20 rounded overflow-hidden relative border "
+                      className="relative w-full aspect-square rounded-lg overflow-hidden border bg-gray-50"
                     >
                       <img
                         src={url}
-                        alt={url}
+                        alt="customer"
                         className="w-full h-full object-cover"
                       />
+
                       <button
                         onClick={() => removeExistingCustomerPhoto(url)}
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow hover:bg-red-500 hover:text-white transition"
                       >
-                        <X size={12} />
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
 
-                  {/* then show previews for new customer photos */}
+                  {/* New photos */}
                   {customerPhotosPreview.map((p) => (
                     <div
                       key={p.id}
-                      className="w-20 h-20 rounded overflow-hidden relative border "
+                      className="relative w-full aspect-square rounded-lg overflow-hidden border bg-gray-50"
                     >
                       <img
                         src={typeof p.url === "string" ? p.url : ""}
                         alt={p.name}
                         className="w-full h-full object-cover"
                       />
+
                       <button
                         onClick={() => removeNewCustomerPhotoFile(p.name)}
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
+                        className="absolute top-1 right-1  bg-[var(--background-card)] rounded-full p-1 shadow hover:bg-red-500 hover:text-white transition"
                       >
-                        <X size={12} />
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
+
                 </div>
+
               </div>
             )}
 
@@ -2710,7 +2764,7 @@ const ECommerceSection: React.FC = () => {
                   onChange={(e) =>
                     handleProductInputChange("notes", e.target.value)
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                   rows={4}
                 />
               </div>
@@ -2726,7 +2780,7 @@ const ECommerceSection: React.FC = () => {
                   onChange={(e) =>
                     handleProductInputChange("terms", e.target.value)
                   }
-                  className="w-full p-2 border  rounded"
+                  className="w-full p-2 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded"
                   rows={4}
                 />
               </div>
@@ -2748,7 +2802,7 @@ const ECommerceSection: React.FC = () => {
                 e.target.value.split(",").map((s) => s.trim())
               )
             }
-            className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
+            className="w-full px-4 py-2.5 border bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
             placeholder="Enter tags separated by comma"
           />
           <div className="flex gap-2">
@@ -2770,11 +2824,11 @@ const ECommerceSection: React.FC = () => {
               )}
             </button>
             <button
-  onClick={() => setCurrentView("inventory")}
-  className="flex-1 px-4 py-2 border rounded-lg  text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
->
-  Cancel
-</button>
+              onClick={() => setCurrentView("inventory")}
+              className="flex-1 px-2 py-2 border rounded-lg text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
@@ -4048,7 +4102,7 @@ const ECommerceSection: React.FC = () => {
               <>
                 <button
                   onClick={() => setCurrentView("inventory")}
-                 className="flex-1 px-4 py-2 border rounded-lg   text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="flex-1 px-4 py-2 border rounded-lg   text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
