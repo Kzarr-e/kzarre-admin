@@ -2380,10 +2380,12 @@ const ECommerceSection: React.FC = () => {
               </label>
             </div>
           </div>
-          <p>
-            <b>Allowed formats: JPG, PNG, WEBP</b>
-            <b>Maximum size: 10MB</b>
-            <b>Maximum images: 10</b>
+         <p className="text-xs text-[var(--textSecondary)] mt-3">
+           Allowed formats: JPG, PNG, WEBP
+            <br/>
+            Maximum size: 10MB
+             <br/>
+            Maximum images: 10
           </p>
 
           {/* Info */}
@@ -2768,13 +2770,11 @@ const ECommerceSection: React.FC = () => {
               )}
             </button>
             <button
-              onClick={() => {
-                setCurrentView("inventory");
-              }}
-              className="flex-1 px-4 py-2 bg-[var(--background-card)]  dark:bg-[var(--bgCard)] border text-white font-medium rounded-lg"
-            >
-              Cancel
-            </button>
+  onClick={() => setCurrentView("inventory")}
+  className="flex-1 px-4 py-2 border rounded-lg  text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+>
+  Cancel
+</button>
           </div>
         </div>
       </div>
@@ -4048,7 +4048,7 @@ const ECommerceSection: React.FC = () => {
               <>
                 <button
                   onClick={() => setCurrentView("inventory")}
-                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
+                 className="flex-1 px-4 py-2 border rounded-lg   text-[var(--textPrimary)] font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
