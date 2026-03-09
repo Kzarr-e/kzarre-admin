@@ -22,10 +22,7 @@ export default function Home() {
 };
 
   return (
-    <>  <Script
-  src="https://monitor.creonox.com/data/tracker.js"
-  strategy="afterInteractive"
-/>
+    <>  
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E8F5E9] relative overflow-hidden">
       {/* Floating Background Elements */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-[#A0EDA8]/30 rounded-full blur-3xl animate-pulse" />

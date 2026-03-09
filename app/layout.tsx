@@ -45,13 +45,32 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
+  const apiKey = process.env.NEXT_PUBLIC_CREONOX_KEY;
+
   return (
 
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
         <Script
-          src="https://monitor.creonox.com/data/tracker.js"
+          src="http://localhost:4000/data/tracker.js"
           strategy="afterInteractive"
+        />
+
+        <Script
+          id="creonox-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener("load", function() {
+                if(window.Creonox){
+                  Creonox.init({
+                    apiKey: "${apiKey}"
+                  });
+                }
+              });
+            `,
+          }}
         />
         <Toaster position="bottom-center" toastOptions={{
           duration: 4000,

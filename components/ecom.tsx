@@ -30,10 +30,7 @@ import {
   Grid,
   List,
 } from "lucide-react";
-
-import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   DndContext,
   closestCenter,
@@ -538,7 +535,6 @@ const ECommerceSection: React.FC = () => {
           },
         }
       );
-
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.message || `Delete failed with ${res.status}`);
@@ -728,7 +724,6 @@ const ECommerceSection: React.FC = () => {
       await fetchCoupons();
     }
   };
-
   const handleUpdateCoupon = async (id: string) => {
     try {
       const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") || "" : "";
@@ -882,9 +877,6 @@ const ECommerceSection: React.FC = () => {
   });
   const [showAddVariant, setShowAddVariant] = useState(false);
 
-  // Option 1 states (stable upload model)
-  // existingImages: URLs already on S3 (strings). These are shown for edit.
-  // newImages: File[] that will be uploaded when saving.
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
   // previews for both (combined)
@@ -965,10 +957,43 @@ const ECommerceSection: React.FC = () => {
   };
   // Called on file input change for product images
   const handleNewImageFiles = (files: File[]) => {
-    const imgs = files.filter((f) => f.type.startsWith("image/"));
-    if (imgs.length === 0) return;
-    setNewImages((prev) => [...prev, ...imgs]);
-    addPreviewsForFiles(imgs);
+
+    files.forEach((file) => {
+
+      if (!file.type.startsWith("image/")) {
+        toast.error("Only image files are allowed");
+        return;
+      }
+
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error(`"${file.name}" is too large. Max size 100MB.`);
+        return;
+      }
+
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        // image valid
+        setNewImages((prev) => [...prev, file]);
+
+        setImagePreviews((prev) => [
+          ...prev,
+          {
+            id: Date.now() + Math.random(),
+            url: url,
+            name: file.name,
+          },
+        ]);
+      };
+
+      img.onerror = () => {
+        toast.error(`"${file.name}" is not a valid image.`);
+      };
+
+      img.src = url;
+    });
+
   };
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -1163,7 +1188,6 @@ const ECommerceSection: React.FC = () => {
         toast.error("Please fill in product name and category.");
         return;
       }
-
       // if creating new product and no existingImages and no newImages -> require at least one image
       if (existingImages.length === 0 && newImages.length === 0) {
         toast.error(
@@ -1171,8 +1195,6 @@ const ECommerceSection: React.FC = () => {
         );
         return;
       }
-
-
       const formData = new FormData();
       formData.append("name", productForm.name);
       formData.append("description", productForm.description);
@@ -1180,10 +1202,8 @@ const ECommerceSection: React.FC = () => {
       formData.append("category", productForm.category); // single select
       formData.append("vendor", productForm.vendor);
       formData.append("tags", JSON.stringify(productForm.tags || []));
-      // keep old gender array for compat, but "category" is the main single-select.
       formData.append("gender", JSON.stringify(productForm.gender || []));
       formData.append("variants", JSON.stringify(variants || []));
-
       // extra fields
       formData.append("highlights", productForm.highlights || "");
       formData.append("materialDetails", productForm.materialDetails || "");
@@ -1360,8 +1380,16 @@ const ECommerceSection: React.FC = () => {
               reject(err);
             }
           } else {
+
             console.error("❌ Upload failed:", xhr.status, xhr.responseText);
-            toast.error(`Upload failed (${xhr.status}) — ${xhr.statusText}`);
+
+            try {
+              const err = JSON.parse(xhr.responseText);
+              toast.error(err.message || "Upload failed");
+            } catch {
+              toast.error(`Upload failed (${xhr.status})`);
+            }
+
             reject(new Error("Upload failed"));
           }
         };
@@ -2259,15 +2287,12 @@ const ECommerceSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Column - Upload, Metadata, and Vertical Tabs */}
       <div className="lg:col-span-1 space-y-6">
         {/* Upload Images */}
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
           <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
-            Upload img
+            Upload Media
           </h3>
-
-          {/* Combined preview: existingImages (URLs) + newImages (previews) */}
           <div className="space-y-4">
             {/* Main preview */}
             <div className="relative rounded-lg overflow-hidden bg-gray-100">
@@ -2355,6 +2380,11 @@ const ECommerceSection: React.FC = () => {
               </label>
             </div>
           </div>
+          <p>
+            <b>Allowed formats: JPG, PNG, WEBP</b>
+            <b>Maximum size: 10MB</b>
+            <b>Maximum images: 10</b>
+          </p>
 
           {/* Info */}
           <p className="text-xs text-[var(--textSecondary)] mt-3">
@@ -2748,6 +2778,7 @@ const ECommerceSection: React.FC = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
   const handleCancelOrder = async (orderId: string) => {
@@ -2775,7 +2806,6 @@ const ECommerceSection: React.FC = () => {
       console.error(err);
     }
   };
-
   // ===================== ORDER DETAILS MODAL =====================
   interface OrderItem {
     product: string;
@@ -2786,7 +2816,6 @@ const ECommerceSection: React.FC = () => {
     size?: string;
     color?: string;
   }
-
   interface OrderAddress {
     name?: string;
     phone?: string;
@@ -2795,7 +2824,6 @@ const ECommerceSection: React.FC = () => {
     state?: string;
     line1?: string;
   }
-
   interface OrderDetailsModel {
     orderId: string;
     amount: number;
@@ -2804,7 +2832,6 @@ const ECommerceSection: React.FC = () => {
     items: OrderItem[];
     address: OrderAddress;
   }
-
   interface OrderDetailsModalProps {
     order: OrderDetailsModel | null;
     onClose: () => void;
@@ -2817,7 +2844,6 @@ const ECommerceSection: React.FC = () => {
     onClose: () => void;
     onUpdate: (newStatus: string) => void;
   }
-
   const StatusModal: React.FC<StatusModalProps> = ({
     orderId,
     currentStatus,
@@ -2891,7 +2917,6 @@ const ECommerceSection: React.FC = () => {
       </div>
     );
   };
-
   const handlePrintLabel = (order: any) => {
     if (!order) return;
 
@@ -3071,7 +3096,6 @@ const ECommerceSection: React.FC = () => {
 
     printWindow!.document.close();
   };
-
   const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     order,
     onClose,
@@ -3206,7 +3230,6 @@ const ECommerceSection: React.FC = () => {
       </div>
     );
   };
-
   const renderOrders = () => (
     <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
       <div className="p-6 border-b ">
@@ -3344,7 +3367,6 @@ const ECommerceSection: React.FC = () => {
       )}
     </div>
   );
-
   const renderDiscounts = () => (
     <div className="space-y-6">
       {/* Header with Tabs */}
@@ -3999,9 +4021,6 @@ const ECommerceSection: React.FC = () => {
 
     </div>
   );
-
-
-
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
 
@@ -4037,8 +4056,7 @@ const ECommerceSection: React.FC = () => {
                   onClick={handleSaveProduct}
                   className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
                   style={{ backgroundColor: "#A0EDA8" }}
-                  disabled={uploading}
-                >
+                  disabled={uploading}>
                   {uploading ? (
                     <>
                       <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
@@ -4055,7 +4073,6 @@ const ECommerceSection: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* Tabs */}
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
         <div className="flex gap-6">
