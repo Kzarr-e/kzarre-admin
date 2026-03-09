@@ -53,7 +53,7 @@ export default function RootLayout({
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
         <Script
-          src="https://monitor.creonox.com/data/tracker.js"
+          src="https://monitor.creonox.com/data/data/tracker.js"
           strategy="afterInteractive"
         />
 
