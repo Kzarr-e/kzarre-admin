@@ -87,6 +87,7 @@ export default function MiniCRMPage() {
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
         null
     );
+
     const clearCustomerFilter = () => {
         setCustomerFilter("all");
     };
@@ -160,7 +161,12 @@ export default function MiniCRMPage() {
     const [savingNote, setSavingNote] = useState(false);
 
     const [showPromiseForm, setShowPromiseForm] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
+    useEffect(() => {
+        const t = sessionStorage.getItem("access_token");
+        setToken(t);
+    }, []);
     const getTomorrowDate = () => {
         const now = new Date();
 
@@ -178,12 +184,16 @@ export default function MiniCRMPage() {
     };
 
     const approveReturn = async (orderId: string) => {
+        const token = sessionStorage.getItem("access_token");
         await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/orders/return/approve/${orderId}`,
             {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                
                 body: JSON.stringify({ orderId }),
             }
         );
@@ -193,14 +203,18 @@ export default function MiniCRMPage() {
 
     const rejectReturn = async (orderId: string) => {
         const reason = prompt("Reason for rejecting return?");
+        const token = sessionStorage.getItem("access_token");
         if (!reason) return;
 
         await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/orders/return/reject`,
             {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                
                 body: JSON.stringify({ orderId, reason }),
             }
         );
@@ -211,7 +225,11 @@ export default function MiniCRMPage() {
     const fetchReturns = async () => {
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/returns`,
-            { credentials: "include" }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         );
         const data = await res.json();
         setReturns(data.returns || []);
@@ -225,7 +243,11 @@ export default function MiniCRMPage() {
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/orders?email=${email}&limit=1`,
-                { credentials: "include" }
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             if (!res.ok) {
@@ -271,7 +293,11 @@ export default function MiniCRMPage() {
 
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/orders/${orderId}`,
-                { credentials: "include" }
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             if (!res.ok) {
@@ -304,7 +330,11 @@ export default function MiniCRMPage() {
 
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/customers`,
-                { credentials: "include" }
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             if (!res.ok) return;
@@ -387,7 +417,11 @@ export default function MiniCRMPage() {
 
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/search?${params}`,
-                { credentials: "include" }
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             if (!res.ok) {
@@ -460,7 +494,11 @@ export default function MiniCRMPage() {
     const fetchTimeline = async () => {
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/timeline/${selectedCustomerId}`,
-            { credentials: "include" }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         );
         const data = await res.json();
         setTimeline(Array.isArray(data) ? data : []);
@@ -469,7 +507,11 @@ export default function MiniCRMPage() {
     const fetchPromises = async () => {
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/promises/${selectedCustomerId}`,
-            { credentials: "include" }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         );
         const data = await res.json();
         setPromises(Array.isArray(data) ? data : []);
@@ -478,7 +520,11 @@ export default function MiniCRMPage() {
     const fetchNotes = async () => {
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/notes/${selectedCustomerId}`,
-            { credentials: "include" }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         );
         const data = await res.json();
         setNotes(Array.isArray(data) ? data : []);
@@ -488,6 +534,7 @@ export default function MiniCRMPage() {
         promiseId: string,
         newStatus: "fulfilled"
     ) => {
+        const token = sessionStorage.getItem("access_token");
         if (!customer) return;
 
         const ok = window.confirm("Mark this promise as FULFILLED?");
@@ -507,8 +554,11 @@ export default function MiniCRMPage() {
                 `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/promises/update-status`,
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    
                     body: JSON.stringify({
                         promiseId,
                         newStatus: "fulfilled",
@@ -525,42 +575,15 @@ export default function MiniCRMPage() {
             fetchPromises();
         }
     };
-
-    const formatDate = (d: Date) => {
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${d.getFullYear()}-${month}-${day}`;
-    };
     /* =========================================================
        CREATE NOTE
     ========================================================= */
-    const createNote = async () => {
-        if (!noteText.trim() || !customer) return;
 
-        setSavingNote(true);
-
-        await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/notes/create`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    customerId: customer._id,
-                    message: noteText,
-                }),
-            }
-        );
-
-        setNoteText("");
-        setSavingNote(false);
-        fetchNotes();
-        fetchTimeline();
-    };
     /* =========================================================
        CREATE PROMISE
     ========================================================= */
     const createPromise = async () => {
+        const token = sessionStorage.getItem("access_token");
         if (!promiseForm.dueDate || !customer) {
             toast.error("Select due date");
             return;
@@ -573,8 +596,10 @@ export default function MiniCRMPage() {
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/promises/create`,
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
                 body: JSON.stringify({
                     customerId: customer._id,
                     type: promiseForm.type,
@@ -613,25 +638,30 @@ export default function MiniCRMPage() {
     };
 
     const fetchContactMessages = async () => {
-        if (!customer) return;
+        if (!customer || !token) return;
 
         try {
             setLoadingMessages(true);
 
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/messages/contact?email=${encodeURIComponent(customer.email)}`,
-                { credentials: "include" }
+                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/messages/contact`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             const data = await res.json();
+
             setContactMessages(Array.isArray(data.messages) ? data.messages : []);
         } catch (err) {
             console.error("Fetch contact messages failed:", err);
-            setContactMessages([]);
         } finally {
             setLoadingMessages(false);
         }
     };
+
     useEffect(() => {
         if (!selectedCustomerId || !customer) return;
 
